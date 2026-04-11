@@ -16,7 +16,34 @@ def init_db():
                 score TEXT,
                 status TEXT NOT NULL
             )
-        """)
+                    """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS bets (
+                bet_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_name TEXT NOT NULL,
+                match_id INTEGER NOT NULL REFERENCES matches(match_id),
+                prediction TEXT NOT NULL,
+                stake_pct REAL NOT NULL,
+                stake_amount REAL NOT NULL,
+                reasoning TEXT,
+                result TEXT,
+                profit_loss REAL,
+                created_at TEXT DEFAULT (datetime('now'))
+            )
+                    """)
+        cursor.execute("""           
+            CREATE TABLE IF NOT EXISTS agents (
+                agent_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                strategy TEXT NOT NULL,
+                description TEXT,
+                balance REAL NOT NULL DEFAULT 10000.0,
+                total_bets INTEGER NOT NULL DEFAULT 0,
+                wins INTEGER NOT NULL DEFAULT 0,
+                losses INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT DEFAULT (datetime('now'))
+            )
+                    """)
 
 def save_match(match):
     with sqlite3.connect(DATABASE_PATH) as conn:
@@ -66,5 +93,36 @@ def get_finished_matches():
                        """)
         return [dict(row) for row in cursor.fetchall()]
 
+def save_bet(agent_name, match_id, prediction, stake_pct, stake_amount, reasoning):
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT OR IGNORE INTO bets 
+            (agent_name, match_id, prediction, stake_pct, stake_amount, reasoning)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (agent_name, match_id, prediction, stake_pct, stake_amount, reasoning))
+
+def init_agents(agents):
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        for agent in agents:
+            cursor.execute("""
+                INSERT OR IGNORE INTO agents (name, strategy, description)
+                VALUES (?, ?, ?)
+            """, (agent["name"], agent["strategy"], agent["description"]))
+
+def get_agent_balance(agent_name):
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT balance FROM agents WHERE name = ?", (agent_name,))
+        row = cursor.fetchone()
+        return row["balance"] if row else 10000.0
+
 if __name__ == "__main__":
+    from ai_agents import AGENTS
     init_db()
+    init_agents(AGENTS)
+    print("Database initialized!")
