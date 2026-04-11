@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% for match in matches %}
+        <p>{{match.league}}</p>
+        <p>{{match.home_team}} vs {{match.away_team}}</p>
+
+        <p>{{match.winner}}</p>
+        <p>{{match.score}}</p>
+        <p>{{ match.utc_date.split('T')[0] }}</p>
+        <p>{{ match.utc_date.split('T')[1][:5] }}</p>
+        <p>--------------------------</p>
+    {% endfor %}
+{% endblock %}
