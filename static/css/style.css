@@ -58,3 +58,34 @@ nav {
 .match-card span {
     margin: 4px 0;
 }
+
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 32px;
+}
+
+.dashboard-table th {
+    padding: 12px;
+    text-align: left;
+    color: #6EDBF5;
+    border-bottom: 1px solid #6EDBF5;
+}
+
+.dashboard-table td {
+    padding: 12px;
+    border-bottom: 1px solid #724237;
+}
+
+.dashboard-table .profit {
+    color: #4CAF50;
+}
+
+.dashboard-table .loss {
+    color: #f44336;
+}
+
+.dashboard-title {
+    color: #6EDBF5;
+    margin: 32px;
+}

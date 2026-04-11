@@ -185,6 +185,18 @@ def get_match_by_api_id(api_id):
         row = cursor.fetchone()
         return dict(row) if row else None
 
+def get_agents():
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT *, 
+            ROUND(CAST(wins AS FLOAT) / CAST(total_bets AS FLOAT) * 100, 1) as win_rate
+            FROM agents
+            ORDER BY balance DESC
+        """)
+        return [dict(row) for row in cursor.fetchall()]
+
 if __name__ == "__main__":
     from ai_agents import AGENTS
     init_db()

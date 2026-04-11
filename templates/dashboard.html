@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="dashboard-title">AI Agents Dashboard</h2>
+<table class="dashboard-table">
+    <thead>
+        <tr>
+            <th>Agent</th>
+            <th>Strategy</th>
+            <th>Balance</th>
+            <th>Bets</th>
+            <th>Wins</th>
+            <th>Losses</th>
+            <th>Win Rate</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for agent in agents %}
+        <tr>
+            <td>{{ agent.name }}</td>
+            <td style="color: #6EDBF5">{{ agent.strategy }}</td>
+            <td class="{% if agent.balance >= 10000 %}profit{% else %}loss{% endif %}">
+                ${{ "%.2f"|format(agent.balance) }}
+            </td>
+            <td>{{ agent.total_bets }}</td>
+            <td class="profit">{{ agent.wins }}</td>
+            <td class="loss">{{ agent.losses }}</td>
+            <td>
+                {% if agent.total_bets > 0 %}
+                    {{ agent.win_rate }}%
+                {% else %}
+                    N/A
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
