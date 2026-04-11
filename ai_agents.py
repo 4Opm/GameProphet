@@ -2,8 +2,9 @@ import ollama
 from config import OLLAMA_MODEL
 
 from database import save_bet, get_agent_balance, get_team_recent_matches, bet_exists, get_unresolved_bets, resolve_bet
+from config import GROQ_API_KEY, GROQ_MODEL, OLLAMA_MODEL, AI_PROVIDER
 
-
+import time
 
 AGENTS = [
     {
@@ -68,7 +69,6 @@ AGENTS = [
     }
 ]
 
-
 def get_agent_prediction(agent, match):
     home_recent = get_team_recent_matches(match['home_team'])
     away_recent = get_team_recent_matches(match['away_team'])
@@ -93,15 +93,27 @@ Recent form of {match['away_team']}:
 {format_recent(away_recent, match['away_team'])}
 """
 
-    response = ollama.chat(
-        model=OLLAMA_MODEL,
-        messages=[
-            {"role": "system", "content": agent["system_prompt"]},
-            {"role": "user", "content": f"Analyze this match and make your prediction:\n{match_info}"}
-        ]
-    )
+    messages = [
+        {"role": "system", "content": agent["system_prompt"]},
+        {"role": "user", "content": f"Analyze this match and make your prediction:\n{match_info}"}
+    ]
 
-    return response["message"]["content"]
+    if AI_PROVIDER == "groq":
+        from groq import Groq
+        client = Groq(api_key=GROQ_API_KEY)
+        response = client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=messages
+        )
+        return response.choices[0].message.content
+
+    else:
+        import ollama
+        response = ollama.chat(
+            model=OLLAMA_MODEL,
+            messages=messages
+        )
+        return response["message"]["content"]
 
 def parse_prediction(response_text):
     result = {
@@ -148,6 +160,7 @@ def place_bets_for_match(match):
             stake_amount=stake_amount,
             reasoning=parsed["reasoning"]
         )
+        time.sleep(3) 
 
 
 

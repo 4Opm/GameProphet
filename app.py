@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, redirect, url_for
 from database import get_upcoming_matches, get_finished_matches
 from database import get_upcoming_matches, get_finished_matches, get_agents
 from database import get_upcoming_matches, get_finished_matches, get_agents, get_bets_for_match, get_match_by_id
@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello_world():
-    return 'Hello world!'
+    return redirect(url_for('dashboard'))
 
 @app.route('/upcoming')
 def upcoming_matches():
