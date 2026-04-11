@@ -1,0 +1,60 @@
+body {
+    background-color: #03232B;
+    color: #f0f0f0;
+    font-family: 'Roboto';
+    margin: 0;
+    padding: 0;
+}
+
+a:link{
+    text-decoration: none;
+    color: #6EDBF5;
+}
+
+a:visited {
+    color: #6EDBF5;
+} 
+
+nav {
+    display: flex;
+    justify-content: flex-end;
+    gap: 20px;
+    padding: 16px 32px;
+    border-bottom: 1px solid #6EDBF5;
+}
+
+.matches-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 32px;
+}
+
+.match-card {
+    background-color: #724237;
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.match-card:hover {
+    transform: scale(1.02);
+    transition: transform 0.2s;
+}
+
+.league {
+    color: #6EDBF5;
+    font-size: 0.85em;
+}
+
+.teams {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin: 8px 0;
+}
+
+.match-card p,
+.match-card span {
+    margin: 4px 0;
+}

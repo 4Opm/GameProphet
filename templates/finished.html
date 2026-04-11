@@ -1,14 +1,24 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <div class="matches-grid">
     {% for match in matches %}
-        <p>{{match.league}}</p>
-        <p>{{match.home_team}} vs {{match.away_team}}</p>
+        <div class="match-card">
+            <span class="league">{{match.league}}</span>
+            <p class="teams">{{match.home_team}} vs {{match.away_team}}</p>
+            
+            {% if match.winner == 'HOME_TEAM' %}
+                Winner: {{ match.home_team }}
+            {% elif match.winner == 'AWAY_TEAM' %}
+                Winner: {{ match.away_team }}
+            {% elif match.winner == 'DRAW' %}
+                Draw
+            {% endif %}
 
-        <p>{{match.winner}}</p>
-        <p>{{match.score}}</p>
-        <p>{{ match.utc_date.split('T')[0] }}</p>
-        <p>{{ match.utc_date.split('T')[1][:5] }}</p>
-        <p>--------------------------</p>
+            <p class="score">{{match.score}}</p>
+            <span class="date">{{ match.utc_date.split('T')[0] }}</span>
+            <span class="time">{{ match.utc_date.split('T')[1][:5] }}</span>
+        </div>
     {% endfor %}
+    </div>
 {% endblock %}
