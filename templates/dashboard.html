@@ -18,7 +18,7 @@
         {% for agent in agents %}
         <tr>
             <td>{{ agent.name }}</td>
-            <td style="color: #6EDBF5">{{ agent.strategy }}</td>
+            <td style="color: #58A6FF">{{ agent.strategy }}</td>
             <td class="{% if agent.balance >= 10000 %}profit{% else %}loss{% endif %}">
                 ${{ "%.2f"|format(agent.balance) }}
             </td>

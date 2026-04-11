@@ -2,7 +2,7 @@
 
 {% block content %}
 <div style="padding: 32px">
-    <a href="javascript:history.back()" style="color: #6EDBF5">← Back</a>
+    <a href="javascript:history.back()" style="color: #58A6FF">← Back</a>
     
     <div class="match-card" style="max-width: 500px; margin: 24px auto;">
         <span class="league">{{ match.league }}</span>
@@ -10,7 +10,7 @@
         <span class="date">{{ match.utc_date.split('T')[0] }}</span>
         <span class="time">{{ match.utc_date.split('T')[1][:5] }}</span>
         {% if match.status == 'FINISHED' %}
-            <p style="color: #6EDBF5; font-size: 1.4em; margin-top: 8px">{{ match.score }}</p>
+            <p style="color: #58A6FF; font-size: 1.4em; margin-top: 8px">{{ match.score }}</p>
             <p>
                 {% if match.winner == 'HOME_TEAM' %}Winner: {{ match.home_team }}
                 {% elif match.winner == 'AWAY_TEAM' %}Winner: {{ match.away_team }}
@@ -19,7 +19,7 @@
         {% endif %}
     </div>
 
-    <h3 style="color: #6EDBF5; text-align: center; margin-bottom: 16px">AI Predictions</h3>
+    <h3 style="color: #58A6FF; text-align: center; margin-bottom: 16px">AI Predictions</h3>
     
     {% if bets %}
     <table class="dashboard-table">
@@ -38,7 +38,7 @@
             {% for bet in bets %}
             <tr>
                 <td>{{ bet.agent_name }}</td>
-                <td style="color: #6EDBF5">{{ bet.prediction }}</td>
+                <td style="color: #58A6FF">{{ bet.prediction }}</td>
                 <td>{{ bet.stake_pct }}%</td>
                 <td>${{ "%.2f"|format(bet.stake_amount) }}</td>
                 <td class="{% if bet.result == 'WIN' %}profit{% elif bet.result == 'LOSS' %}loss{% endif %}">

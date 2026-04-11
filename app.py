@@ -29,5 +29,9 @@ def match_detail(match_id):
     bets = get_bets_for_match(match_id)
     return render_template('match.html', match=match, bets=bets)
 
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
+
 if __name__ == '__main__':
     app.run()

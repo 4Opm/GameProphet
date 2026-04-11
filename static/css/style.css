@@ -1,5 +1,5 @@
 body {
-    background-color: #03232B;
+    background-color: #0D1117;
     color: #f0f0f0;
     font-family: 'Roboto';
     margin: 0;
@@ -8,11 +8,11 @@ body {
 
 a:link{
     text-decoration: none;
-    color: #6EDBF5;
+    color: #58A6FF;
 }
 
 a:visited {
-    color: #6EDBF5;
+    color: #58A6FF;
 } 
 
 nav {
@@ -20,7 +20,8 @@ nav {
     justify-content: flex-end;
     gap: 20px;
     padding: 16px 32px;
-    border-bottom: 1px solid #6EDBF5;
+    border-bottom: 1px solid #58A6FF;
+    align-items: center;
 }
 
 .matches-grid {
@@ -31,7 +32,7 @@ nav {
 }
 
 .match-card {
-    background-color: #724237;
+    background-color: #2F3136;
     border-radius: 8px;
     padding: 16px;
     cursor: pointer;
@@ -44,7 +45,7 @@ nav {
 }
 
 .league {
-    color: #6EDBF5;
+    color: #58A6FF;
     font-size: 0.85em;
 }
 
@@ -68,13 +69,13 @@ nav {
 .dashboard-table th {
     padding: 12px;
     text-align: left;
-    color: #6EDBF5;
-    border-bottom: 1px solid #6EDBF5;
+    color: #58A6FF;
+    border-bottom: 1px solid #58A6FF;
 }
 
 .dashboard-table td {
     padding: 12px;
-    border-bottom: 1px solid #724237;
+    border-bottom: 1px solid #2F3136;
 }
 
 .dashboard-table .profit {
@@ -86,6 +87,47 @@ nav {
 }
 
 .dashboard-title {
-    color: #6EDBF5;
+    color: #58A6FF;
     margin: 32px;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+.dashboard-table {
+    width: calc(100% - 64px);
+}
+
+.faq-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 32px;
+}
+
+.faq-title {
+    color: #58A6FF;
+}
+
+.faq-section-title {
+    color: #5865F2;
+}
+
+.faq-agent-name {
+    color: #58A6FF;
+}
+
+footer {
+    text-align: center;
+    padding: 24px;
+    margin-top: 48px;
+    border-top: 1px solid #2F3136;
+    color: #aaa;
+    font-size: 0.85em;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
 }
