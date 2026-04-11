@@ -3,8 +3,14 @@ from database import get_upcoming_matches, get_finished_matches
 from database import get_upcoming_matches, get_finished_matches, get_agents
 from database import get_upcoming_matches, get_finished_matches, get_agents, get_bets_for_match, get_match_by_id
 
+from database import init_db, init_agents
+from ai_agents import AGENTS
+
+
 app = Flask(__name__)
 
+init_db()
+init_agents(AGENTS)
 
 @app.route('/')
 def hello_world():
