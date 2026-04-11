@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding: 32px">
+    <a href="javascript:history.back()" style="color: #6EDBF5">← Back</a>
+    
+    <div class="match-card" style="max-width: 500px; margin: 24px auto;">
+        <span class="league">{{ match.league }}</span>
+        <p class="teams">{{ match.home_team }} vs {{ match.away_team }}</p>
+        <span class="date">{{ match.utc_date.split('T')[0] }}</span>
+        <span class="time">{{ match.utc_date.split('T')[1][:5] }}</span>
+        {% if match.status == 'FINISHED' %}
+            <p style="color: #6EDBF5; font-size: 1.4em; margin-top: 8px">{{ match.score }}</p>
+            <p>
+                {% if match.winner == 'HOME_TEAM' %}Winner: {{ match.home_team }}
+                {% elif match.winner == 'AWAY_TEAM' %}Winner: {{ match.away_team }}
+                {% else %}Draw{% endif %}
+            </p>
+        {% endif %}
+    </div>
+
+    <h3 style="color: #6EDBF5; text-align: center; margin-bottom: 16px">AI Predictions</h3>
+    
+    {% if bets %}
+    <table class="dashboard-table">
+        <thead>
+            <tr>
+                <th>Agent</th>
+                <th>Prediction</th>
+                <th>Stake</th>
+                <th>Amount</th>
+                <th>Result</th>
+                <th>Profit/Loss</th>
+                <th>Reasoning</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bet in bets %}
+            <tr>
+                <td>{{ bet.agent_name }}</td>
+                <td style="color: #6EDBF5">{{ bet.prediction }}</td>
+                <td>{{ bet.stake_pct }}%</td>
+                <td>${{ "%.2f"|format(bet.stake_amount) }}</td>
+                <td class="{% if bet.result == 'WIN' %}profit{% elif bet.result == 'LOSS' %}loss{% endif %}">
+                    {{ bet.result if bet.result else 'Pending' }}
+                </td>
+                <td class="{% if bet.profit_loss and bet.profit_loss > 0 %}profit{% elif bet.profit_loss and bet.profit_loss < 0 %}loss{% endif %}">
+                    {% if bet.profit_loss %}${{ "%.2f"|format(bet.profit_loss) }}{% else %}N/A{% endif %}
+                </td>
+                <td style="font-size: 0.85em; color: #aaa">{{ bet.reasoning }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p style="text-align: center; color: #aaa">No predictions yet for this match.</p>
+    {% endif %}
+</div>
+{% endblock %}

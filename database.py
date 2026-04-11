@@ -197,6 +197,23 @@ def get_agents():
         """)
         return [dict(row) for row in cursor.fetchall()]
 
+def get_bets_for_match(match_id):
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT * FROM bets WHERE match_id = ?
+        """, (match_id,))
+        return [dict(row) for row in cursor.fetchall()]
+
+def get_match_by_id(match_id):
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM matches WHERE match_id = ?", (match_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
 if __name__ == "__main__":
     from ai_agents import AGENTS
     init_db()
