@@ -36,5 +36,35 @@ def save_match(match):
         ))
 
 
+def get_upcoming_matches():
+    with sqlite3.connect(DATABASE_PATH) as conn:
+
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("""
+                       SELECT * FROM matches 
+                       WHERE (
+                         status = 'TIMED' OR status = 'SCHEDULED'
+                       ) ORDER BY (
+                        utc_date
+                       )
+                       
+                       """)
+        return [dict(row) for row in cursor.fetchall()]
+
+def get_finished_matches():
+    with sqlite3.connect(DATABASE_PATH) as conn:
+
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("""
+                       SELECT * FROM matches
+                       WHERE status = 'FINISHED'
+                       ORDER BY utc_date DESC
+                       """)
+        return [dict(row) for row in cursor.fetchall()]
+
 if __name__ == "__main__":
     init_db()
