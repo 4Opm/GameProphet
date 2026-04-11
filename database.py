@@ -136,6 +136,45 @@ def get_team_recent_matches(team_name, limit=5):
         """, (team_name, team_name, limit))
         return [dict(row) for row in cursor.fetchall()]
 
+def bet_exists(agent_name, match_id):
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 1 FROM bets 
+            WHERE agent_name = ? AND match_id = ?
+        """, (agent_name, match_id))
+        return cursor.fetchone() is not None
+
+def get_unresolved_bets():
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT bets.*, matches.winner, matches.status
+            FROM bets
+            JOIN matches ON bets.match_id = matches.match_id
+            WHERE bets.result IS NULL
+            AND matches.status = 'FINISHED'
+        """)
+        return [dict(row) for row in cursor.fetchall()]
+
+def resolve_bet(bet_id, result, profit_loss, agent_name):
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE bets 
+            SET result = ?, profit_loss = ?
+            WHERE bet_id = ?
+        """, (result, profit_loss, bet_id))
+        cursor.execute("""
+            UPDATE agents 
+            SET balance = balance + ?,
+                total_bets = total_bets + 1,
+                wins = wins + ?,
+                losses = losses + ?
+            WHERE name = ?
+        """, (profit_loss, 1 if result == 'WIN' else 0, 1 if result == 'LOSS' else 0, agent_name))
+
 if __name__ == "__main__":
     from ai_agents import AGENTS
     init_db()

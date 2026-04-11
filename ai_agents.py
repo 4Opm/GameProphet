@@ -1,7 +1,9 @@
 import ollama
 from config import OLLAMA_MODEL
 
-from database import save_bet, get_agent_balance, get_team_recent_matches
+from database import save_bet, get_agent_balance, get_team_recent_matches, bet_exists, get_unresolved_bets, resolve_bet
+
+
 
 AGENTS = [
     {
@@ -122,6 +124,9 @@ from database import save_bet, get_agent_balance
 
 def place_bets_for_match(match):
     for agent in AGENTS:
+        if bet_exists(agent["name"], match["match_id"]):
+            print(f"{agent['name']}: bet already exists for this match, skipping")
+            continue
         balance = get_agent_balance(agent["name"])
         
         response = get_agent_prediction(agent, match)
@@ -143,3 +148,34 @@ def place_bets_for_match(match):
             stake_amount=stake_amount,
             reasoning=parsed["reasoning"]
         )
+
+
+
+def settle_bets():
+    unresolved = get_unresolved_bets()
+    
+    if not unresolved:
+        print("No unresolved bets found")
+        return
+    
+    for bet in unresolved:
+        prediction = bet["prediction"]
+        winner = bet["winner"]
+        stake_amount = bet["stake_amount"]
+        
+        if prediction == "HOME" and winner == "HOME_TEAM":
+            result = "WIN"
+            profit_loss = stake_amount
+        elif prediction == "AWAY" and winner == "AWAY_TEAM":
+            result = "WIN"
+            profit_loss = stake_amount
+        elif prediction == "DRAW" and winner == "DRAW":
+            result = "WIN"
+            profit_loss = stake_amount
+        else:
+            result = "LOSS"
+            profit_loss = -stake_amount
+        
+        print(f"{bet['agent_name']}: {prediction} vs {winner} -> {result} | ${profit_loss:.2f}")
+        
+        resolve_bet(bet["bet_id"], result, profit_loss, bet["agent_name"])
