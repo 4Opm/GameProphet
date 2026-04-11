@@ -46,7 +46,7 @@ def init_db():
             )
                     """)
 
-def save_match(match):
+def save_match(match, league_code):
     with sqlite3.connect(DATABASE_PATH) as conn:
 
         score = f'{match["score"]["fullTime"]["home"]}:{match["score"]["fullTime"]["away"]}' if match["score"]["fullTime"]["home"] is not None else None
@@ -59,7 +59,7 @@ def save_match(match):
                 ?, ?, ?, ?, ?, ?, ?, ?
             )
         """, (
-            match["competition"]["name"],match["id"], match["utcDate"], match["homeTeam"]["shortName"], match["awayTeam"]["shortName"], match["score"]["winner"],
+            league_code,match["id"], match["utcDate"], match["homeTeam"]["shortName"], match["awayTeam"]["shortName"], match["score"]["winner"],
             score, match["status"]
         ))
 
@@ -174,6 +174,16 @@ def resolve_bet(bet_id, result, profit_loss, agent_name):
                 losses = losses + ?
             WHERE name = ?
         """, (profit_loss, 1 if result == 'WIN' else 0, 1 if result == 'LOSS' else 0, agent_name))
+
+def get_match_by_api_id(api_id):
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT * FROM matches WHERE api_id = ?
+        """, (api_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
 
 if __name__ == "__main__":
     from ai_agents import AGENTS
