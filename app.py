@@ -6,11 +6,25 @@ from database import get_upcoming_matches, get_finished_matches, get_agents, get
 from database import init_db, init_agents
 from ai_agents import AGENTS
 
+import threading
+from scheduler import update_matches
+
 
 app = Flask(__name__)
 
 init_db()
 init_agents(AGENTS)
+
+def run_scheduler():
+    update_matches()
+    from apscheduler.schedulers.background import BackgroundScheduler
+    from time import sleep
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(update_matches, "interval", hours=1)
+    scheduler.start()
+
+thread = threading.Thread(target=run_scheduler, daemon=True)
+thread.start()
 
 @app.route('/')
 def hello_world():

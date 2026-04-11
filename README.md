@@ -38,15 +38,13 @@ GameProphet supports two AI providers:
         API_KEY=your_football_data_api_key
         GROQ_API_KEY=your_groq_api_ke
 
-6. Run the scheduler to initialize the database and start fetching matches:
-
-        python scheduler.py
-
-7. In a separate terminal, run the Flask app:
+6. Run the application:
 
         python app.py
 
-8. Open your browser and go to http://localhost:5000
+The scheduler will start automatically in the background.
+
+7. Open your browser and go to http://localhost:5000
 
 ## Project Structure
 
