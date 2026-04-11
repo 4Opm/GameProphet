@@ -1,6 +1,8 @@
 import ollama
 from config import OLLAMA_MODEL
 
+from database import save_bet, get_agent_balance, get_team_recent_matches
+
 AGENTS = [
     {
         "name": "Conservative Carl",
@@ -66,17 +68,34 @@ AGENTS = [
 
 
 def get_agent_prediction(agent, match):
+    home_recent = get_team_recent_matches(match['home_team'])
+    away_recent = get_team_recent_matches(match['away_team'])
+
+    def format_recent(matches, team_name):
+        if not matches:
+            return f"No recent matches found for {team_name}"
+        lines = []
+        for m in matches:
+            lines.append(f"  {m['home_team']} vs {m['away_team']} | Score: {m['score']} | Winner: {m['winner']}")
+        return "\n".join(lines)
+
     match_info = f"""
-    Match: {match['home_team']} vs {match['away_team']}
-    League: {match['league']}
-    Date: {match['utc_date']}
-    """
+Match: {match['home_team']} vs {match['away_team']}
+League: {match['league']}
+Date: {match['utc_date']}
+
+Recent form of {match['home_team']}:
+{format_recent(home_recent, match['home_team'])}
+
+Recent form of {match['away_team']}:
+{format_recent(away_recent, match['away_team'])}
+"""
 
     response = ollama.chat(
         model=OLLAMA_MODEL,
         messages=[
             {"role": "system", "content": agent["system_prompt"]},
-            {"role": "user", "content": f"Analyze this match and make your bet:\n{match_info}"}
+            {"role": "user", "content": f"Analyze this match and make your prediction:\n{match_info}"}
         ]
     )
 

@@ -28,7 +28,8 @@ def init_db():
                 reasoning TEXT,
                 result TEXT,
                 profit_loss REAL,
-                created_at TEXT DEFAULT (datetime('now'))
+                created_at TEXT DEFAULT (datetime('now')),
+                UNIQUE(agent_name, match_id)
             )
                     """)
         cursor.execute("""           
@@ -98,7 +99,7 @@ def save_bet(agent_name, match_id, prediction, stake_pct, stake_amount, reasonin
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT OR IGNORE INTO bets 
+            INSERT OR REPLACE INTO bets 
             (agent_name, match_id, prediction, stake_pct, stake_amount, reasoning)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (agent_name, match_id, prediction, stake_pct, stake_amount, reasoning))
@@ -120,6 +121,20 @@ def get_agent_balance(agent_name):
         cursor.execute("SELECT balance FROM agents WHERE name = ?", (agent_name,))
         row = cursor.fetchone()
         return row["balance"] if row else 10000.0
+
+def get_team_recent_matches(team_name, limit=5):
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT home_team, away_team, score, winner, utc_date
+            FROM matches
+            WHERE (home_team = ? OR away_team = ?)
+            AND status = 'FINISHED'
+            ORDER BY utc_date DESC
+            LIMIT ?
+        """, (team_name, team_name, limit))
+        return [dict(row) for row in cursor.fetchall()]
 
 if __name__ == "__main__":
     from ai_agents import AGENTS
