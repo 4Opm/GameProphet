@@ -1,6 +1,6 @@
 import os
 
-DATABASE_PATH = "football.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
 LEAGUES = [
     "PL",
     "BL1",

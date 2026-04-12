@@ -5,6 +5,7 @@ GameProphet is a football match prediction simulation. Five AI agents, each star
 ## Requirements
 
 - Python 3.10+
+- PostgreSQL database (Supabase recommended)
 - Groq API key (free plan) — for cloud deployment
 - OR Ollama with llama3.2 — for local usage
 - football-data.org API key (free plan)
@@ -33,18 +34,22 @@ GameProphet supports two AI providers:
 
         ollama pull llama3.2
 
-5. Create a `.env` file in the root folder and add your API key:
+5. Set up a PostgreSQL database (e.g. on Supabase) and copy the connection string.
+
+6. Create a .env file in the root folder:
 
         API_KEY=your_football_data_api_key
-        GROQ_API_KEY=your_groq_api_ke
+        GROQ_API_KEY=your_groq_api_key
+        AI_PROVIDER=groq
+        DATABASE_URL=your_postgresql_connection_string
 
-6. Run the application:
+7. Run the application:
 
         python app.py
 
 The scheduler will start automatically in the background.
 
-7. Open your browser and go to http://localhost:5000
+8. Open your browser and go to http://localhost:5000
 
 ## Project Structure
 
