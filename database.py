@@ -38,7 +38,7 @@ def init_db():
                 name TEXT UNIQUE NOT NULL,
                 strategy TEXT NOT NULL,
                 description TEXT,
-                balance REAL NOT NULL DEFAULT 10000.0,
+                balance REAL NOT NULL DEFAULT 0.0,
                 total_bets INTEGER NOT NULL DEFAULT 0,
                 wins INTEGER NOT NULL DEFAULT 0,
                 losses INTEGER NOT NULL DEFAULT 0,
@@ -110,8 +110,8 @@ def init_agents(agents):
         cursor = conn.cursor()
         for agent in agents:
             cursor.execute("""
-                INSERT OR IGNORE INTO agents (name, strategy, description)
-                VALUES (?, ?, ?)
+                INSERT OR IGNORE INTO agents (name, strategy, description, balance)
+                VALUES (?, ?, ?, 0)
             """, (agent["name"], agent["strategy"], agent["description"]))
 
 def get_agent_balance(agent_name):

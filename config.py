@@ -1,7 +1,11 @@
 import os
 
 DATABASE_PATH = "football.db"
-LEAGUES = ["PL","PD","BL1","SA","FL1"]
+LEAGUES = [
+    "PL",
+    "BL1",
+    "SA",
+]
 OLLAMA_MODEL = "llama3.2"
 
 AI_PROVIDER = "groq" # "ollama" for local model

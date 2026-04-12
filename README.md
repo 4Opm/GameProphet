@@ -60,10 +60,8 @@ The scheduler will start automatically in the background.
 ## Leagues
 
 - Premier League
-- La Liga
 - Bundesliga
 - Serie A
-- Ligue 1
 
 ## AI Agents
 
@@ -76,10 +74,11 @@ The scheduler will start automatically in the background.
 ## How It Works
 
 1. The scheduler fetches match data from football-data.org every hour.
-2. For each upcoming match, all five AI agents make a prediction using Llama 3.2 via Ollama.
-3. Each agent receives the match details and the last 5 results for both teams.
-4. When a match finishes, bets are automatically settled and agent balances are updated.
-5. Results and statistics are displayed on the website in real time.
+2. For each upcoming match, all five AI agents make a prediction using Groq API (llama-3.3-70b-versatile).
+3. Each agent has a budget of $10,000 per match regardless of previous results. The dashboard tracks cumulative profit and loss starting from $0.
+4. Each agent receives the match details and the last 5 results for both teams.
+5. When a match finishes, bets are automatically settled and agent balances are updated.
+6. Results and statistics are displayed on the website in real time.
 
 ## Disclaimer
 

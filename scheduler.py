@@ -15,12 +15,17 @@ def update_matches():
 
     for i in LEAGUES:
         results = fetch_matches(i, lastWeek.isoformat(), nextWeek.isoformat())
+        bets_placed = 0
+        MAX_BETS_PER_RUN = 10
+
         for j in results["matches"]:
             save_match(j, i)
-            if j["status"] in ["TIMED", "SCHEDULED"]:
+            if j["status"] in ["TIMED", "SCHEDULED"] and bets_placed < MAX_BETS_PER_RUN:
                 match = get_match_by_api_id(j["id"])
                 if match:
                     place_bets_for_match(match)
+                    bets_placed += 1
+                    
         sleep(6)
 
     settle_bets()

@@ -139,7 +139,7 @@ def place_bets_for_match(match):
         if bet_exists(agent["name"], match["match_id"]):
             print(f"{agent['name']}: bet already exists for this match, skipping")
             continue
-        balance = get_agent_balance(agent["name"])
+        balance = 10000
         
         response = get_agent_prediction(agent, match)
         parsed = parse_prediction(response)
