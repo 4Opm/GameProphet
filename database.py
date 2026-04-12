@@ -172,7 +172,7 @@ def get_agents():
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("""
             SELECT *,
-            ROUND(CAST(wins AS FLOAT) / NULLIF(CAST(total_bets AS FLOAT), 0) * 100, 1) as win_rate
+            ROUND((CAST(wins AS FLOAT) / NULLIF(CAST(total_bets AS FLOAT), 0) * 100)::numeric, 1)
             FROM agents
             ORDER BY balance DESC
         """)
