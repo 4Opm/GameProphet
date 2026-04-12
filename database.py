@@ -176,7 +176,12 @@ def get_agents():
             FROM agents
             ORDER BY balance DESC
         """)
-        return [dict(row) for row in cursor.fetchall()]
+        result = []
+        for row in cursor.fetchall():
+            r = dict(row)
+            r['win_rate'] = float(r['win_rate']) if r['win_rate'] else None
+            result.append(r)
+        return result
 
 def get_bets_for_match(match_id):
     with get_db() as conn:
