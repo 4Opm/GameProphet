@@ -18,7 +18,10 @@ def init_db():
                 away_team TEXT NOT NULL,
                 winner TEXT,
                 score TEXT,
-                status TEXT NOT NULL
+                status TEXT NOT NULL,
+                odds_home REAL,
+                odds_draw REAL,
+                odds_away REAL
             )
         """)
         cursor.execute("""
@@ -109,7 +112,7 @@ def get_agent_balance(agent_name):
         row = cursor.fetchone()
         return row["balance"] if row else 10000.0
 
-def get_team_recent_matches(team_name, limit=5):
+def get_team_recent_matches(team_name, limit=10):
     with get_db() as conn:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("""
@@ -135,7 +138,8 @@ def get_unresolved_bets():
     with get_db() as conn:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("""
-            SELECT bets.*, matches.winner, matches.status
+            SELECT bets.*, matches.winner, matches.status,
+                   matches.odds_home, matches.odds_draw, matches.odds_away
             FROM bets
             JOIN matches ON bets.match_id = matches.match_id
             WHERE bets.result IS NULL
@@ -197,6 +201,32 @@ def get_match_by_id(match_id):
         cursor.execute("SELECT * FROM matches WHERE match_id = %s", (match_id,))
         row = cursor.fetchone()
         return dict(row) if row else None
+
+def get_team_home_matches(team_name, limit=5):
+    with get_db() as conn:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("""
+            SELECT home_team, away_team, score, winner, utc_date
+            FROM matches
+            WHERE home_team = %s
+            AND status = 'FINISHED'
+            ORDER BY utc_date DESC
+            LIMIT %s
+        """, (team_name, limit))
+        return [dict(row) for row in cursor.fetchall()]
+
+def get_team_away_matches(team_name, limit=5):
+    with get_db() as conn:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("""
+            SELECT home_team, away_team, score, winner, utc_date
+            FROM matches
+            WHERE away_team = %s
+            AND status = 'FINISHED'
+            ORDER BY utc_date DESC
+            LIMIT %s
+        """, (team_name, limit))
+        return [dict(row) for row in cursor.fetchall()]
 
 if __name__ == "__main__":
     from ai_agents import AGENTS

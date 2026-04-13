@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 LEAGUES = [
@@ -12,3 +14,5 @@ AI_PROVIDER = "groq" # "ollama" for local model
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_MODEL = "llama-3.3-70b-versatile"
+
+ODDS_API_KEY = os.getenv("ODDS_API_KEY")

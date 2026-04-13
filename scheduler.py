@@ -8,9 +8,11 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from ai_agents import place_bets_for_match, settle_bets
 
+from odds_fetcher import update_all_odds
+
 def update_matches():
     today = datetime.now().date()
-    lastWeek = today - timedelta(days=7)
+    lastWeek = today - timedelta(days=40)
     nextWeek = today + timedelta(days=7)
 
     for i in LEAGUES:
@@ -29,6 +31,7 @@ def update_matches():
         sleep(6)
 
     settle_bets()
+    update_all_odds()
     
 if __name__ == "__main__":
     from database import init_db, init_agents

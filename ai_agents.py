@@ -1,7 +1,7 @@
 import ollama
 from config import OLLAMA_MODEL
 
-from database import save_bet, get_agent_balance, get_team_recent_matches, bet_exists, get_unresolved_bets, resolve_bet
+from database import save_bet, get_agent_balance, get_team_recent_matches, bet_exists, get_unresolved_bets, resolve_bet, get_team_home_matches, get_team_away_matches
 from config import GROQ_API_KEY, GROQ_MODEL, OLLAMA_MODEL, AI_PROVIDER
 
 import time
@@ -17,7 +17,8 @@ AGENTS = [
         You must always respond in this EXACT format with no other text:
         PREDICTION: HOME or DRAW or AWAY
         STAKE_PCT: (number between 5 and 15)
-        REASONING: (one sentence explanation)"""
+        REASONING: (one sentence explanation)
+        Always provide a prediction regardless of data availability. Never refuse to make a prediction."""
     },
     {
         "name": "Aggressive Alex",
@@ -29,7 +30,8 @@ AGENTS = [
         You must always respond in this EXACT format with no other text:
         PREDICTION: HOME or DRAW or AWAY
         STAKE_PCT: (number between 30 and 60)
-        REASONING: (one sentence explanation)"""
+        REASONING: (one sentence explanation)
+        Always provide a prediction regardless of data availability. Never refuse to make a prediction."""
     },
     {
         "name": "Statistical Steve",
@@ -41,7 +43,8 @@ AGENTS = [
         You must always respond in this EXACT format with no other text:
         PREDICTION: HOME or DRAW or AWAY
         STAKE_PCT: (number between 10 and 25)
-        REASONING: (one sentence explanation)"""
+        REASONING: (one sentence explanation)
+        Always provide a prediction regardless of data availability. Never refuse to make a prediction."""
     },
     {
         "name": "Form Fred",
@@ -53,7 +56,8 @@ AGENTS = [
         You must always respond in this EXACT format with no other text:
         PREDICTION: HOME or DRAW or AWAY
         STAKE_PCT: (number between 15 and 35)
-        REASONING: (one sentence explanation)"""
+        REASONING: (one sentence explanation)
+        Always provide a prediction regardless of data availability. Never refuse to make a prediction."""
     },
     {
         "name": "Random Randy",
@@ -65,17 +69,20 @@ AGENTS = [
         You must always respond in this EXACT format with no other text:
         PREDICTION: HOME or DRAW or AWAY
         STAKE_PCT: (number between 5 and 50)
-        REASONING: (one sentence explanation)"""
+        REASONING: (one sentence explanation)
+        Always provide a prediction regardless of data availability. Never refuse to make a prediction."""
     }
 ]
 
 def get_agent_prediction(agent, match):
-    home_recent = get_team_recent_matches(match['home_team'])
-    away_recent = get_team_recent_matches(match['away_team'])
+    home_home = get_team_home_matches(match['home_team'])
+    home_away = get_team_away_matches(match['home_team'])
+    away_home = get_team_home_matches(match['away_team'])
+    away_away = get_team_away_matches(match['away_team'])
 
-    def format_recent(matches, team_name):
+    def format_recent(matches):
         if not matches:
-            return f"No recent matches found for {team_name}"
+            return "No data available"
         lines = []
         for m in matches:
             lines.append(f"  {m['home_team']} vs {m['away_team']} | Score: {m['score']} | Winner: {m['winner']}")
@@ -85,12 +92,19 @@ def get_agent_prediction(agent, match):
 Match: {match['home_team']} vs {match['away_team']}
 League: {match['league']}
 Date: {match['utc_date']}
+Odds: Home {match.get('odds_home', 'N/A')} | Draw {match.get('odds_draw', 'N/A')} | Away {match.get('odds_away', 'N/A')}
 
-Recent form of {match['home_team']}:
-{format_recent(home_recent, match['home_team'])}
+{match['home_team']} recent HOME games:
+{format_recent(home_home)}
 
-Recent form of {match['away_team']}:
-{format_recent(away_recent, match['away_team'])}
+{match['home_team']} recent AWAY games:
+{format_recent(home_away)}
+
+{match['away_team']} recent HOME games:
+{format_recent(away_home)}
+
+{match['away_team']} recent AWAY games:
+{format_recent(away_away)}
 """
 
     messages = [
@@ -176,15 +190,23 @@ def settle_bets():
         winner = bet["winner"]
         stake_amount = bet["stake_amount"]
         
+        # Wybierz odpowiedni kurs
+        if prediction == "HOME":
+            odds = bet["odds_home"] or 2.0
+        elif prediction == "AWAY":
+            odds = bet["odds_away"] or 2.0
+        else:
+            odds = bet["odds_draw"] or 3.0
+
         if prediction == "HOME" and winner == "HOME_TEAM":
             result = "WIN"
-            profit_loss = stake_amount
+            profit_loss = round(stake_amount * odds - stake_amount, 2)
         elif prediction == "AWAY" and winner == "AWAY_TEAM":
             result = "WIN"
-            profit_loss = stake_amount
+            profit_loss = round(stake_amount * odds - stake_amount, 2)
         elif prediction == "DRAW" and winner == "DRAW":
             result = "WIN"
-            profit_loss = stake_amount
+            profit_loss = round(stake_amount * odds - stake_amount, 2)
         else:
             result = "LOSS"
             profit_loss = -stake_amount
