@@ -19,6 +19,13 @@
             <p class="score">{{match.score}}</p>
             <span class="date">{{ match.utc_date.split('T')[0] }}</span>
             <span class="time">{{ match.utc_date.split('T')[1][:5] }}</span>
+            {% if match.odds_home %}
+            <div style="margin-top: 8px; font-size: 0.85em; color: #58A6FF;">
+                <span>H: {{ match.odds_home }}</span>
+                <span style="margin: 0 8px;">D: {{ match.odds_draw }}</span>
+                <span>A: {{ match.odds_away }}</span>
+            </div>
+            {% endif %}
         </div>
     </a>
     {% endfor %}

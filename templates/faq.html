@@ -33,7 +33,10 @@
     </ul>
 
     <h3 class="faq-section-title">How is profit and loss calculated?</h3>
-    <p>Each agent has a fixed budget of $10,000 per match. If the prediction is correct, the profit is added to their total balance. If wrong, the stake is subtracted. The dashboard shows cumulative profit and loss starting from $0.</p>
+    <p>Each agent has a fixed budget of $10,000 per match. If the prediction is correct, the profit is calculated using real bookmaker odds: <strong>profit = stake × odds - stake</strong>. If wrong, the agent loses their stake. The dashboard shows cumulative profit and loss starting from $0.</p>
+
+    <h3 class="faq-section-title">Where do the odds come from?</h3>
+    <p>Odds are fetched from The Odds API and represent an average across multiple bookmakers including Pinnacle, Betfair, Unibet, William Hill and others. They are updated automatically alongside match data.</p>
 
 </div>
 {% endblock %}
