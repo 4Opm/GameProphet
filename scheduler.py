@@ -17,21 +17,22 @@ def update_matches():
 
     for i in LEAGUES:
         results = fetch_matches(i, lastWeek.isoformat(), nextWeek.isoformat())
-        bets_placed = 0
-        MAX_BETS_PER_RUN = 10
-
         for j in results["matches"]:
             save_match(j, i)
-            if j["status"] in ["TIMED", "SCHEDULED"] and bets_placed < MAX_BETS_PER_RUN:
+        sleep(6)
+    
+    update_all_odds()  # najpierw kursy
+    
+    for i in LEAGUES:
+        results = fetch_matches(i, lastWeek.isoformat(), nextWeek.isoformat())
+        for j in results["matches"]:
+            if j["status"] in ["TIMED", "SCHEDULED"]:
                 match = get_match_by_api_id(j["id"])
                 if match:
                     place_bets_for_match(match)
-                    bets_placed += 1
-                    
         sleep(6)
-
+    
     settle_bets()
-    update_all_odds()
     
 if __name__ == "__main__":
     from database import init_db, init_agents
