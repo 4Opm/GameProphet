@@ -10,10 +10,10 @@
         </select>
     </div>
 
-    <div class="matches-grid" data-league="{{ match.league }}">
+    <div class="matches-grid">
     {% for match in matches %}
     <a href="/match/{{ match.match_id }}" style="text-decoration: none; color: inherit;">
-        <div class="match-card">
+        <div class="match-card" data-league="{{ match.league }}">
             <span class="league">{{match.league}}</span>
             <p class="teams">{{match.home_team}} vs {{match.away_team}}</p>
             
