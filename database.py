@@ -228,6 +228,20 @@ def get_team_away_matches(team_name, limit=5):
         """, (team_name, limit))
         return [dict(row) for row in cursor.fetchall()]
 
+def get_agent_bets(agent_name):
+    with get_db() as conn:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("""
+            SELECT bets.*, matches.home_team, matches.away_team, 
+                   matches.utc_date, matches.league, matches.score,
+                   matches.winner, matches.status,
+                   matches.odds_home, matches.odds_draw, matches.odds_away
+            FROM bets
+            JOIN matches ON bets.match_id = matches.match_id
+            WHERE bets.agent_name = %s
+            ORDER BY matches.utc_date DESC
+        """, (agent_name,))
+        return [dict(row) for row in cursor.fetchall()]
 if __name__ == "__main__":
     from ai_agents import AGENTS
     init_db()

@@ -1,7 +1,5 @@
 from flask import Flask, jsonify, render_template, redirect, url_for
-from database import get_upcoming_matches, get_finished_matches
-from database import get_upcoming_matches, get_finished_matches, get_agents
-from database import get_upcoming_matches, get_finished_matches, get_agents, get_bets_for_match, get_match_by_id
+from database import get_upcoming_matches, get_finished_matches, get_agents, get_bets_for_match, get_match_by_id, get_agent_bets
 
 from database import init_db, init_agents
 from ai_agents import AGENTS
@@ -42,6 +40,11 @@ def finished_matches():
 def dashboard():
     agents = get_agents()
     return render_template('dashboard.html', agents=agents)
+
+@app.route('/agent/<agent_name>')
+def agent_detail(agent_name):
+    bets = get_agent_bets(agent_name)
+    return render_template('agent.html', agent_name=agent_name, bets=bets)
 
 @app.route('/match/<int:match_id>')
 def match_detail(match_id):
