@@ -1,7 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="matches-grid">
+    <div style="padding: 16px 32px 0;">
+        <select id="league-filter" onchange="filterMatches()" style="background: #2F3136; color: #C9D1D9; border: 1px solid #58A6FF; padding: 8px; border-radius: 6px;">
+            <option value="all">All leagues</option>
+            <option value="PL">Premier League</option>
+            <option value="BL1">Bundesliga</option>
+            <option value="SA">Serie A</option>
+        </select>
+    </div>
+
+    <div class="matches-grid" data-league="{{ match.league }}">
     {% for match in matches %}
     <a href="/match/{{ match.match_id }}" style="text-decoration: none; color: inherit;">
         <div class="match-card">
