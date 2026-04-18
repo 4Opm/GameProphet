@@ -1,7 +1,7 @@
 import ollama
 from config import OLLAMA_MODEL
 
-from database import save_bet, get_agent_balance, get_team_recent_matches, bet_exists, get_unresolved_bets, resolve_bet, get_team_home_matches, get_team_away_matches
+from database import save_bet, get_agent_balance, get_team_recent_matches, bet_exists, get_unresolved_bets, resolve_bet, get_team_home_matches, get_team_away_matches, get_team_stats
 from config import GROQ_API_KEY, GROQ_MODEL, OLLAMA_MODEL, AI_PROVIDER
 
 import time
@@ -79,6 +79,8 @@ def get_agent_prediction(agent, match):
     home_away = get_team_away_matches(match['home_team'])
     away_home = get_team_home_matches(match['away_team'])
     away_away = get_team_away_matches(match['away_team'])
+    home_stats = get_team_stats(match['home_team'])
+    away_stats = get_team_stats(match['away_team'])
 
     def format_recent(matches):
         if not matches:
@@ -93,6 +95,12 @@ Match: {match['home_team']} vs {match['away_team']}
 League: {match['league']}
 Date: {match['utc_date']}
 Odds: Home {match.get('odds_home', 'N/A')} | Draw {match.get('odds_draw', 'N/A')} | Away {match.get('odds_away', 'N/A')}
+
+{match['home_team']} stats (last {home_stats['matches_analyzed'] if home_stats else 0} matches):
+Avg goals scored: {home_stats['avg_scored'] if home_stats else 'N/A'} | Avg goals conceded: {home_stats['avg_conceded'] if home_stats else 'N/A'}
+
+{match['away_team']} stats (last {away_stats['matches_analyzed'] if away_stats else 0} matches):
+Avg goals scored: {away_stats['avg_scored'] if away_stats else 'N/A'} | Avg goals conceded: {away_stats['avg_conceded'] if away_stats else 'N/A'}
 
 {match['home_team']} recent HOME games:
 {format_recent(home_home)}

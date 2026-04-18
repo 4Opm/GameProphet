@@ -242,6 +242,47 @@ def get_agent_bets(agent_name):
             ORDER BY matches.utc_date DESC
         """, (agent_name,))
         return [dict(row) for row in cursor.fetchall()]
+    
+def get_team_stats(team_name):
+    with get_db() as conn:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("""
+            SELECT home_team, away_team, score
+            FROM matches
+            WHERE (home_team = %s OR away_team = %s)
+            AND status = 'FINISHED'
+            AND score IS NOT NULL
+        """, (team_name, team_name))
+        
+        matches = cursor.fetchall()
+        
+        if not matches:
+            return None
+        
+        goals_scored = []
+        goals_conceded = []
+        
+        for match in matches:
+            try:
+                home_goals, away_goals = map(int, match['score'].split(':'))
+                if match['home_team'] == team_name:
+                    goals_scored.append(home_goals)
+                    goals_conceded.append(away_goals)
+                else:
+                    goals_scored.append(away_goals)
+                    goals_conceded.append(home_goals)
+            except:
+                continue
+        
+        if not goals_scored:
+            return None
+        
+        return {
+            "avg_scored": round(sum(goals_scored) / len(goals_scored), 2),
+            "avg_conceded": round(sum(goals_conceded) / len(goals_conceded), 2),
+            "matches_analyzed": len(goals_scored)
+        }
+    
 if __name__ == "__main__":
     from ai_agents import AGENTS
     init_db()
