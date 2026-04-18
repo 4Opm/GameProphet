@@ -19,7 +19,7 @@ AGENTS = [
         If you are not confident enough, set STAKE_PCT to 0 to skip the bet.
         You must always respond in this EXACT format with no other text:
         PREDICTION: HOME or DRAW or AWAY
-        STAKE_PCT: (number between 0 and 100)
+        STAKE_PCT: (number between 0 and 60)
         REASONING: (two sentence analysis based on the provided data)
         """
     },
@@ -46,7 +46,7 @@ AGENTS = [
         If the data is inconclusive, set STAKE_PCT to 0 to skip the bet.
         You must always respond in this EXACT format with no other text:
         PREDICTION: HOME or DRAW or AWAY
-        STAKE_PCT: (number between 0 and 100)
+        STAKE_PCT: (number between 0 and 60)
         REASONING: (two sentence analysis based on the provided data)
         """
     },
@@ -60,7 +60,7 @@ AGENTS = [
         If recent form is unclear, set STAKE_PCT to 0 to skip the bet.
         You must always respond in this EXACT format with no other text:
         PREDICTION: HOME or DRAW or AWAY
-        STAKE_PCT: (number between 0 and 100)
+        STAKE_PCT: (number between 0 and 60)
         REASONING: (two sentence analysis based on the provided data)
         """
     },
