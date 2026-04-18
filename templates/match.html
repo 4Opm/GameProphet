@@ -34,6 +34,7 @@
             <tr>
                 <th>Agent</th>
                 <th>Prediction</th>
+                <th>Odds</th>
                 <th>Stake</th>
                 <th>Amount</th>
                 <th>Result</th>
@@ -46,6 +47,12 @@
             <tr>
                 <td>{{ bet.agent_name }}</td>
                 <td style="color: #58A6FF">{{ bet.prediction }}</td>
+                <td>
+                    {% if bet.prediction == 'HOME' %}{{ match.odds_home or 'N/A' }}
+                    {% elif bet.prediction == 'AWAY' %}{{ match.odds_away or 'N/A' }}
+                    {% else %}{{ match.odds_draw or 'N/A' }}
+                    {% endif %}
+                </td>
                 <td>{{ bet.stake_pct }}%</td>
                 <td>${{ "%.2f"|format(bet.stake_amount) }}</td>
                 <td class="{% if bet.result == 'WIN' %}profit{% elif bet.result == 'LOSS' %}loss{% endif %}">
