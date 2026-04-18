@@ -36,7 +36,8 @@ def init_db():
                 result TEXT,
                 profit_loss REAL,
                 created_at TEXT DEFAULT (now()::text),
-                UNIQUE(agent_name, match_id)
+                UNIQUE(agent_name, match_id),
+                skipped BOOLEAN DEFAULT FALSE
             )
         """)
         cursor.execute("""
@@ -86,15 +87,15 @@ def get_finished_matches():
         """)
         return [dict(row) for row in cursor.fetchall()]
 
-def save_bet(agent_name, match_id, prediction, stake_pct, stake_amount, reasoning):
+def save_bet(agent_name, match_id, prediction, stake_pct, stake_amount, reasoning, skipped=False):
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO bets (agent_name, match_id, prediction, stake_pct, stake_amount, reasoning)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO bets (agent_name, match_id, prediction, stake_pct, stake_amount, reasoning, skipped)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (agent_name, match_id) DO NOTHING
-        """, (agent_name, match_id, prediction, stake_pct, stake_amount, reasoning))
-
+        """, (agent_name, match_id, prediction, stake_pct, stake_amount, reasoning, skipped))
+        
 def init_agents(agents):
     with get_db() as conn:
         cursor = conn.cursor()
