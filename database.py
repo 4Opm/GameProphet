@@ -113,6 +113,7 @@ def init_agents(agents):
                 ON CONFLICT (name) DO NOTHING
             """, (agent["name"], agent["strategy"], agent["description"]))
 
+
 def get_team_recent_matches(team_name, limit=10):
     with get_db() as conn:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
