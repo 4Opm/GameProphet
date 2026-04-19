@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, render_template, redirect, url_for, Cache
+from flask import Flask, jsonify, render_template, redirect, url_for
+from flask_caching import Cache
 from database import get_upcoming_matches, get_finished_matches, get_agents, get_bets_for_match, get_match_by_id, get_agent_bets
 
 from database import init_db, init_agents
