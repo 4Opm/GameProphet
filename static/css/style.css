@@ -33,16 +33,19 @@ nav {
 }
 
 .match-card {
-    background-color: #2F3136;
+    background-color: #161B22;
+    border: 1px solid #30363D;
     border-radius: 8px;
     padding: 16px;
     cursor: pointer;
     text-align: center;
+    transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .match-card:hover {
     transform: scale(1.02);
     transition: transform 0.2s ease;
+    border-color: #58A6FF;
     cursor: pointer;
 }
 
@@ -146,4 +149,10 @@ nav a:hover {
     font-size: 1.2em;
     font-weight: bold;
     margin: 8px 0;
+}
+
+@media (max-width: 768px) {
+    .matches-grid {
+        grid-template-columns: 1fr;
+    }
 }

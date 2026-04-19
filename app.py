@@ -25,8 +25,8 @@ thread = threading.Thread(target=run_scheduler, daemon=True)
 thread.start()
 
 @app.route('/')
-def hello_world():
-    return redirect(url_for('dashboard'))
+def index():
+    return render_template('index.html', active_page='home')
 
 @app.route('/upcoming')
 def upcoming_matches():
