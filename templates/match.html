@@ -1,40 +1,81 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="padding: 32px">
-    <a href="javascript:history.back()" style="color: #58A6FF">← Back</a>
+<div class="match-detail-container">
+    <a href="javascript:history.back()" class="match-detail-back">← Back</a>
     
-        <div class="match-card" style="max-width: 500px; margin: 24px auto;">
-            <span class="league">{{ match.league }}</span>
-            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin: 8px 0;">
-                {% if match.home_crest %}
-                <img src="{{ match.home_crest }}" alt="{{ match.home_team }}" style="width: 48px; height: 48px; object-fit: contain;">
-                {% endif %}
-                <p class="teams" style="margin: 0;">{{ match.home_team }} vs {{ match.away_team }}</p>
-                {% if match.away_crest %}
-                <img src="{{ match.away_crest }}" alt="{{ match.away_team }}" style="width: 48px; height: 48px; object-fit: contain;">
-                {% endif %}
-            </div>
-            <span class="date">{{ match.utc_date.split('T')[0] }}</span>
-            <span class="time">{{ match.utc_date.split('T')[1][:5] }}</span>
-            {% if match.odds_home %}
-            <div style="margin-top: 8px; font-size: 0.85em; color: #58A6FF;">
-                <span>H: {{ match.odds_home }}</span>
-                <span style="margin: 0 8px;">D: {{ match.odds_draw }}</span>
-                <span>A: {{ match.odds_away }}</span>
-            </div>
+    <div class="match-card match-detail-card">
+        <span class="league">{{ match.league }}</span>
+        <div class="match-crests">
+            {% if match.home_crest %}
+            <img src="{{ match.home_crest }}" alt="{{ match.home_team }}" class="match-crest">
             {% endif %}
-            {% if match.status == 'FINISHED' %}
-                <p style="color: #58A6FF; font-size: 1.4em; margin-top: 8px">{{ match.score }}</p>
-                <p>
-                    {% if match.winner == 'HOME_TEAM' %}Winner: {{ match.home_team }}
-                    {% elif match.winner == 'AWAY_TEAM' %}Winner: {{ match.away_team }}
-                    {% else %}Draw{% endif %}
-                </p>
+            <p class="teams" style="margin: 0;">{{ match.home_team }} vs {{ match.away_team }}</p>
+            {% if match.away_crest %}
+            <img src="{{ match.away_crest }}" alt="{{ match.away_team }}" class="match-crest">
             {% endif %}
         </div>
+        <span class="date">{{ match.utc_date.split('T')[0] }}</span>
+        <span class="time">{{ match.utc_date.split('T')[1][:5] }}</span>
+        {% if match.odds_home %}
+        <div class="match-odds">
+            <span>H: {{ match.odds_home }}</span>
+            <span>D: {{ match.odds_draw }}</span>
+            <span>A: {{ match.odds_away }}</span>
+        </div>
+        {% endif %}
+        {% if match.status == 'FINISHED' %}
+            <p class="match-score">{{ match.score }}</p>
+            <p>
+                {% if match.winner == 'HOME_TEAM' %}Winner: {{ match.home_team }}
+                {% elif match.winner == 'AWAY_TEAM' %}Winner: {{ match.away_team }}
+                {% else %}Draw{% endif %}
+            </p>
+        {% endif %}
+    </div>
 
-    <h3 style="color: #58A6FF; text-align: center; margin-bottom: 16px">AI Predictions</h3>
+    {% set home_count = bets | selectattr('prediction', 'equalto', 'HOME') | list | length %}
+    {% set draw_count = bets | selectattr('prediction', 'equalto', 'DRAW') | list | length %}
+    {% set away_count = bets | selectattr('prediction', 'equalto', 'AWAY') | list | length %}
+    {% set total = home_count + draw_count + away_count %}
+
+    {% if total > 0 %}
+    <div class="consensus-container">
+        <h4 class="consensus-title">Agent consensus</h4>
+        
+        <div class="consensus-bar-container">
+            <div class="consensus-bar-label">
+                <span>HOME</span>
+                <span>{{ home_count }} agent{{ 's' if home_count != 1 }}</span>
+            </div>
+            <div class="consensus-bar-bg">
+                <div class="consensus-bar-home" style="width: {{ (home_count / total * 100)|int }}%;"></div>
+            </div>
+        </div>
+
+        <div class="consensus-bar-container">
+            <div class="consensus-bar-label">
+                <span>DRAW</span>
+                <span>{{ draw_count }} agent{{ 's' if draw_count != 1 }}</span>
+            </div>
+            <div class="consensus-bar-bg">
+                <div class="consensus-bar-draw" style="width: {{ (draw_count / total * 100)|int }}%;"></div>
+            </div>
+        </div>
+
+        <div class="consensus-bar-container">
+            <div class="consensus-bar-label">
+                <span>AWAY</span>
+                <span>{{ away_count }} agent{{ 's' if away_count != 1 }}</span>
+            </div>
+            <div class="consensus-bar-bg">
+                <div class="consensus-bar-away" style="width: {{ (away_count / total * 100)|int }}%;"></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <h3 class="match-predictions-title">AI Predictions</h3>
     
     {% if bets %}
     <table class="dashboard-table">
@@ -54,7 +95,7 @@
             {% for bet in bets %}
             <tr>
                 <td>{{ bet.agent_name }}</td>
-                <td style="color: #58A6FF">{{ bet.prediction }}</td>
+                <td class="bet-prediction">{{ bet.prediction }}</td>
                 <td>
                     {% if bet.prediction == 'HOME' %}{{ match.odds_home or 'N/A' }}
                     {% elif bet.prediction == 'AWAY' %}{{ match.odds_away or 'N/A' }}
@@ -69,13 +110,13 @@
                 <td class="{% if bet.profit_loss and bet.profit_loss > 0 %}profit{% elif bet.profit_loss and bet.profit_loss < 0 %}loss{% endif %}">
                     {% if bet.profit_loss %}${{ "%.2f"|format(bet.profit_loss) }}{% else %}N/A{% endif %}
                 </td>
-                <td style="font-size: 0.85em; color: #aaa">{{ bet.reasoning }}</td>
+                <td class="bet-reasoning">{{ bet.reasoning }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     {% else %}
-        <p style="text-align: center; color: #aaa">No predictions yet for this match.</p>
+        <p class="no-predictions">No predictions yet for this match.</p>
     {% endif %}
 </div>
 {% endblock %}

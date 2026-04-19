@@ -151,6 +151,120 @@ nav a:hover {
     margin: 8px 0;
 }
 
+.match-detail-container {
+    padding: 32px;
+}
+
+.match-detail-back {
+    color: #58A6FF;
+    text-decoration: none;
+}
+
+.match-detail-card {
+    max-width: 500px;
+    margin: 24px auto;
+}
+
+.match-crest {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.match-crests {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 8px 0;
+}
+
+.match-odds {
+    margin-top: 8px;
+    font-size: 0.85em;
+    color: #58A6FF;
+}
+
+.match-odds span {
+    margin: 0 4px;
+}
+
+.match-score {
+    color: #58A6FF;
+    font-size: 1.4em;
+    margin-top: 8px;
+}
+
+.match-predictions-title {
+    color: #58A6FF;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.no-predictions {
+    text-align: center;
+    color: #aaa;
+}
+
+.bet-prediction {
+    color: #58A6FF;
+}
+
+.bet-reasoning {
+    font-size: 0.85em;
+    color: #aaa;
+}
+
+.consensus-container {
+    max-width: 500px;
+    margin: 0 auto 32px;
+    background: #161B22;
+    border: 1px solid #30363D;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.consensus-title {
+    color: #58A6FF;
+    margin: 0 0 16px;
+    text-align: center;
+}
+
+.consensus-bar-container {
+    margin-bottom: 12px;
+}
+
+.consensus-bar-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    color: #C9D1D9;
+}
+
+.consensus-bar-bg {
+    background: #0D1117;
+    border-radius: 4px;
+    height: 8px;
+}
+
+.consensus-bar-home {
+    background: #58A6FF;
+    border-radius: 4px;
+    height: 8px;
+}
+
+.consensus-bar-draw {
+    background: #5865F2;
+    border-radius: 4px;
+    height: 8px;
+}
+
+.consensus-bar-away {
+    background: #3FB950;
+    border-radius: 4px;
+    height: 8px;
+}
+
 @media (max-width: 768px) {
     .matches-grid {
         grid-template-columns: 1fr;
