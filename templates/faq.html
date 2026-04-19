@@ -6,37 +6,60 @@
     <h2 class="faq-title">Frequently Asked Questions</h2>
 
     <h3 class="faq-section-title">What is GameProphet?</h3>
-    <p>GameProphet is a football match prediction simulation. Five AI agents each starting with $10,000 compete to predict match outcomes across top European leagues.</p>
+    <p>GameProphet is a football match prediction simulation powered by AI. Five autonomous agents, each starting with a virtual budget of $10,000, independently analyze upcoming matches and place bets based on their own unique strategy. The goal is to track which strategy performs best over time across real match data from top European leagues.</p>
+    <p>This is purely a simulation for entertainment and educational purposes. No real money is involved.</p>
 
     <h3 class="faq-section-title">Which leagues are covered?</h3>
-    <p>GameProphet tracks matches from Premier League, Bundesliga and Serie A.</p>
+    <p>GameProphet currently tracks matches from three major European leagues:</p>
+    <ul>
+        <li><strong class="faq-agent-name">Premier League</strong> — Top division of English football</li>
+        <li><strong class="faq-agent-name">Bundesliga</strong> — Top division of German football</li>
+        <li><strong class="faq-agent-name">Serie A</strong> — Top division of Italian football</li>
+    </ul>
+    <p>Match data is fetched automatically from the football-data.org API and updated every hour.</p>
 
     <h3 class="faq-section-title">What data do the agents receive?</h3>
-    <p>Each agent receives the following information before making a prediction:</p>
+    <p>Before making a prediction, each agent receives a detailed context package containing:</p>
     <ul>
-        <li>Home and away team names</li>
-        <li>League name</li>
-        <li>Match date and time</li>
-        <li>Last 5 finished matches for each team (opponent, score, winner)</li>
+        <li>Home and away team names, league and match date</li>
+        <li>Current bookmaker odds (HOME / DRAW / AWAY) averaged across multiple bookmakers</li>
+        <li>League standings for both teams — position, points, wins, draws, losses and goal difference</li>
+        <li>Average goals scored and conceded per match over recent games</li>
+        <li>Last 10 HOME games for the home team</li>
+        <li>Last 10 AWAY games for the home team</li>
+        <li>Last 10 HOME games for the away team</li>
+        <li>Last 10 AWAY games for the away team</li>
     </ul>
+    <p>This gives each agent a comprehensive picture of both teams before making a decision.</p>
 
     <h3 class="faq-section-title">How do the agents work?</h3>
-    <p>Each agent is powered by a local AI model (Llama 3.2 via Ollama) with a unique strategy defined by its system prompt. The agent analyzes the match data and returns a prediction (HOME, DRAW or AWAY) along with a stake percentage and reasoning.</p>
+    <p>Each agent is powered by Llama 3.3 70B running on Groq — a large language model that analyzes the match context and returns a structured prediction. Each agent has a unique system prompt that defines its betting personality and strategy. The model returns three values: a prediction (HOME, DRAW or AWAY), a stake percentage (0–100% of $10,000) and a one or two sentence reasoning explaining the decision.</p>
+    <p>If an agent sets the stake to 0%, it means the agent decided to skip the match due to insufficient confidence. This decision is final and the agent will not reconsider it.</p>
 
     <h3 class="faq-section-title">Meet the agents</h3>
     <ul>
-        <li><strong class="faq-agent-name">Conservative Carl</strong> — Bets only on clear favorites, stakes between 5-15% of budget.</li>
-        <li><strong class="faq-agent-name">Aggressive Alex</strong> — High risk, high reward. Stakes between 30-60% of budget.</li>
-        <li><strong class="faq-agent-name">Statistical Steve</strong> — Carefully analyzes team form before betting 10-25% of budget.</li>
-        <li><strong class="faq-agent-name">Form Fred</strong> — Focuses purely on recent team performance, stakes 15-35%.</li>
-        <li><strong class="faq-agent-name">Random Randy</strong> — Completely unpredictable, stakes anywhere from 5-50%.</li>
+        <li><strong class="faq-agent-name">Conservative Carl</strong> — Only bets when highly confident. Focuses on clear favorites and avoids risky matches. Stakes between 0% and 60% per match. Will skip matches where the data is inconclusive.</li>
+        <li><strong class="faq-agent-name">Aggressive Alex</strong> — Goes big on every match regardless of confidence. Stakes up to 100% of budget per match. Never skips a match.</li>
+        <li><strong class="faq-agent-name">Statistical Steve</strong> — Data-driven analyst who bases every decision strictly on standings, form and odds. Stakes between 0% and 60% per match. Will skip if data is unclear.</li>
+        <li><strong class="faq-agent-name">Form Fred</strong> — Focuses purely on recent team momentum. Looks for winning streaks, scoring runs and defensive solidity. Stakes up to 60% per match. Will skip if form is unclear.</li>
+        <li><strong class="faq-agent-name">Random Randy</strong> — Completely chaotic and unpredictable. Makes decisions based on no logic whatsoever. Stakes anywhere from 0 to 100%. Acts as a random baseline to compare the other agents against.</li>
     </ul>
 
     <h3 class="faq-section-title">How is profit and loss calculated?</h3>
-    <p>Each agent has a fixed budget of $10,000 per match. If the prediction is correct, the profit is calculated using real bookmaker odds: <strong>profit = stake × odds - stake</strong>. If wrong, the agent loses their stake. The dashboard shows cumulative profit and loss starting from $0.</p>
+    <p>Each agent has a fixed budget of $10,000 per match — this resets for every new match regardless of previous results. The stake amount is calculated as a percentage of this $10,000 budget.</p>
+    <p>If the prediction is correct, profit is calculated using real bookmaker odds:</p>
+    <p><strong>profit = stake × odds − stake</strong></p>
+    <p>For example, if an agent stakes $2,000 on a team at odds of 2.50, the profit on a correct prediction is $3,000 ($2,000 × 2.50 − $2,000). If wrong, the agent loses the $2,000 stake. The dashboard balance starts at $0 and reflects the cumulative profit and loss across all settled bets.</p>
 
     <h3 class="faq-section-title">Where do the odds come from?</h3>
-    <p>Odds are fetched from The Odds API and represent an average across multiple bookmakers including Pinnacle, Betfair, Unibet, William Hill and others. They are updated automatically alongside match data.</p>
+    <p>Odds are sourced from The Odds API, which aggregates prices from major bookmakers including Pinnacle, Betfair, William Hill, Unibet, Betsson and others. GameProphet uses the average across all available bookmakers to get a fair market price. Odds are fetched and updated automatically every hour alongside match data, and are only available for upcoming matches.</p>
+
+    <h3 class="faq-section-title">How often is data updated?</h3>
+    <p>The scheduler runs every hour and performs the following tasks in order: fetches the latest match data for all three leagues, updates bookmaker odds for upcoming matches, places bets for any new upcoming matches that have not yet been analyzed, and settles any completed matches by calculating profit and loss for each agent.</p>
 
 </div>
+
+<footer>
+    GameProphet is a simulation for entertainment purposes only. This is not financial or investment advice. All predictions are made by AI agents and should not be used as a basis for real betting decisions.
+</footer>
 {% endblock %}
