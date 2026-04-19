@@ -172,7 +172,7 @@ def parse_prediction(response_text):
     
     return result
 
-from database import save_bet, get_agent_balance
+from database import save_bet
 
 def place_bets_for_match(match):
     for agent in AGENTS:
