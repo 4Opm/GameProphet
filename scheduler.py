@@ -17,6 +17,9 @@ def update_matches():
 
     for i in LEAGUES:
         results = fetch_matches(i, lastWeek.isoformat(), nextWeek.isoformat())
+        if not results:
+            print(f"No results for {i}, skipping")
+            continue
         for j in results["matches"]:
             save_match(j, i)
         sleep(6)
