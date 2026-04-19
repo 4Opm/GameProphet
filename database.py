@@ -113,13 +113,6 @@ def init_agents(agents):
                 ON CONFLICT (name) DO NOTHING
             """, (agent["name"], agent["strategy"], agent["description"]))
 
-def get_agent_balance(agent_name):
-    with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("SELECT balance FROM agents WHERE name = %s", (agent_name,))
-        row = cursor.fetchone()
-        return row["balance"] if row else 10000.0
-
 def get_team_recent_matches(team_name, limit=10):
     with get_db() as conn:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)

@@ -1,10 +1,10 @@
 import ollama
 from config import OLLAMA_MODEL
 
-from database import save_bet, get_agent_balance, get_team_recent_matches, bet_exists, get_unresolved_bets, resolve_bet, get_team_home_matches, get_team_away_matches, get_team_stats
+from database import save_bet, bet_exists, get_unresolved_bets, resolve_bet, get_team_home_matches, get_team_away_matches, get_team_stats
 from config import GROQ_API_KEY, GROQ_MODEL, OLLAMA_MODEL, AI_PROVIDER
 
-from fetcher import fetch_matches, get_standings_dict
+from fetcher import get_standings_dict
 
 import time
 
