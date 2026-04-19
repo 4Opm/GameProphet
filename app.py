@@ -67,6 +67,10 @@ def match_detail(match_id):
     bets = get_bets_for_match(match_id)
     return render_template('match.html', match=match, bets=bets)
 
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html', active_page='privacy')
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
