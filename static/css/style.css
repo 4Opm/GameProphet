@@ -42,7 +42,8 @@ nav {
 
 .match-card:hover {
     transform: scale(1.02);
-    transition: transform 0.2s;
+    transition: transform 0.2s ease;
+    cursor: pointer;
 }
 
 .league {
@@ -127,4 +128,22 @@ footer {
     padding: 12px 0;
     text-align: center;
     border-top: 1px solid #2F3136;
+}
+
+nav a:hover {
+    color: #C9D1D9;
+    border-bottom: 2px solid #58A6FF;
+    padding-bottom: 2px;
+}
+
+.active-nav {
+    color: #C9D1D9 !important;
+    border-bottom: 2px solid #58A6FF;
+    padding-bottom: 2px;
+}
+
+.teams {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin: 8px 0;
 }

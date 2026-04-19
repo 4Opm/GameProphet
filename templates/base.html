@@ -9,11 +9,11 @@
 
 <body>
     <nav>
-        <a href="/" style="color: #5865F2; font-size: 1.3em; font-weight: bold; margin-right: auto;">GameProphet</a>
-        <a href="/upcoming">Upcoming matches</a>
-        <a href="/finished">Finished matches</a>
-        <a href="/dashboard">Dashboard</a>
-        <a href="/faq">FAQ</a>
+        <a href="/" class="{% if active_page == 'home' %}active-nav{% endif %}">GameProphet</a>
+        <a href="/upcoming" class="{% if active_page == 'upcoming' %}active-nav{% endif %}">Upcoming matches</a>
+        <a href="/finished" class="{% if active_page == 'finished' %}active-nav{% endif %}">Finished matches</a>
+        <a href="/dashboard" class="{% if active_page == 'dashboard' %}active-nav{% endif %}">Dashboard</a>
+        <a href="/faq" class="{% if active_page == 'faq' %}active-nav{% endif %}">FAQ</a>
     </nav>
 
     {% block content %}

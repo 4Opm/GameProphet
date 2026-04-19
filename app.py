@@ -30,16 +30,22 @@ def hello_world():
 
 @app.route('/upcoming')
 def upcoming_matches():
-    return render_template("upcoming.html", matches = get_upcoming_matches())
+    matches = get_upcoming_matches()
+    return render_template("upcoming.html", matches=matches, active_page='upcoming')
 
 @app.route('/finished')
 def finished_matches():
-    return render_template("finished.html", matches = get_finished_matches())
+    matches = get_finished_matches()
+    return render_template("finished.html", matches=matches, active_page='finished')
 
 @app.route('/dashboard')
 def dashboard():
     agents = get_agents()
-    return render_template('dashboard.html', agents=agents)
+    return render_template('dashboard.html', agents=agents, active_page='dashboard')
+
+@app.route('/faq')
+def faq():
+    return render_template('faq.html', active_page='faq')
 
 @app.route('/agent/<agent_name>')
 def agent_detail(agent_name):
@@ -51,10 +57,6 @@ def match_detail(match_id):
     match = get_match_by_id(match_id)
     bets = get_bets_for_match(match_id)
     return render_template('match.html', match=match, bets=bets)
-
-@app.route('/faq')
-def faq():
-    return render_template('faq.html')
 
 import os
 
