@@ -21,7 +21,9 @@ def init_db():
                 status TEXT NOT NULL,
                 odds_home REAL,
                 odds_draw REAL,
-                odds_away REAL
+                odds_away REAL,
+                home_crest TEXT,
+                away_crest TEXT
             )
         """)
         cursor.execute("""
@@ -59,13 +61,18 @@ def save_match(match, league_code):
         cursor = conn.cursor()
         score = f'{match["score"]["fullTime"]["home"]}:{match["score"]["fullTime"]["away"]}' if match["score"]["fullTime"]["home"] is not None else None
         cursor.execute("""
-            INSERT INTO matches (league, api_id, utc_date, home_team, away_team, winner, score, status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO matches (league, api_id, utc_date, home_team, away_team, winner, score, status, home_crest, away_crest)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (api_id) DO UPDATE SET
                 winner = EXCLUDED.winner,
                 score = EXCLUDED.score,
                 status = EXCLUDED.status
-        """, (league_code, match["id"], match["utcDate"], match["homeTeam"]["shortName"], match["awayTeam"]["shortName"], match["score"]["winner"], score, match["status"]))
+        """, (
+            league_code, match["id"], match["utcDate"],
+            match["homeTeam"]["shortName"], match["awayTeam"]["shortName"],
+            match["score"]["winner"], score, match["status"],
+            match["homeTeam"]["crest"], match["awayTeam"]["crest"]
+))
 
 def get_upcoming_matches():
     with get_db() as conn:

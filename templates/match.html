@@ -4,27 +4,35 @@
 <div style="padding: 32px">
     <a href="javascript:history.back()" style="color: #58A6FF">← Back</a>
     
-    <div class="match-card" style="max-width: 500px; margin: 24px auto;">
-        <span class="league">{{ match.league }}</span>
-        <p class="teams">{{ match.home_team }} vs {{ match.away_team }}</p>
-        <span class="date">{{ match.utc_date.split('T')[0] }}</span>
-        <span class="time">{{ match.utc_date.split('T')[1][:5] }}</span>
-        {% if match.odds_home %}
-        <div style="margin-top: 8px; font-size: 0.85em; color: #58A6FF;">
-            <span>H: {{ match.odds_home }}</span>
-            <span style="margin: 0 8px;">D: {{ match.odds_draw }}</span>
-            <span>A: {{ match.odds_away }}</span>
+        <div class="match-card" style="max-width: 500px; margin: 24px auto;">
+            <span class="league">{{ match.league }}</span>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin: 8px 0;">
+                {% if match.home_crest %}
+                <img src="{{ match.home_crest }}" alt="{{ match.home_team }}" style="width: 48px; height: 48px; object-fit: contain;">
+                {% endif %}
+                <p class="teams" style="margin: 0;">{{ match.home_team }} vs {{ match.away_team }}</p>
+                {% if match.away_crest %}
+                <img src="{{ match.away_crest }}" alt="{{ match.away_team }}" style="width: 48px; height: 48px; object-fit: contain;">
+                {% endif %}
+            </div>
+            <span class="date">{{ match.utc_date.split('T')[0] }}</span>
+            <span class="time">{{ match.utc_date.split('T')[1][:5] }}</span>
+            {% if match.odds_home %}
+            <div style="margin-top: 8px; font-size: 0.85em; color: #58A6FF;">
+                <span>H: {{ match.odds_home }}</span>
+                <span style="margin: 0 8px;">D: {{ match.odds_draw }}</span>
+                <span>A: {{ match.odds_away }}</span>
+            </div>
+            {% endif %}
+            {% if match.status == 'FINISHED' %}
+                <p style="color: #58A6FF; font-size: 1.4em; margin-top: 8px">{{ match.score }}</p>
+                <p>
+                    {% if match.winner == 'HOME_TEAM' %}Winner: {{ match.home_team }}
+                    {% elif match.winner == 'AWAY_TEAM' %}Winner: {{ match.away_team }}
+                    {% else %}Draw{% endif %}
+                </p>
+            {% endif %}
         </div>
-{% endif %}
-        {% if match.status == 'FINISHED' %}
-            <p style="color: #58A6FF; font-size: 1.4em; margin-top: 8px">{{ match.score }}</p>
-            <p>
-                {% if match.winner == 'HOME_TEAM' %}Winner: {{ match.home_team }}
-                {% elif match.winner == 'AWAY_TEAM' %}Winner: {{ match.away_team }}
-                {% else %}Draw{% endif %}
-            </p>
-        {% endif %}
-    </div>
 
     <h3 style="color: #58A6FF; text-align: center; margin-bottom: 16px">AI Predictions</h3>
     
