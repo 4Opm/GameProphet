@@ -11,7 +11,8 @@
             <th>Bets</th>
             <th>Wins</th>
             <th>Losses</th>
-            <th>Win Rate</th>
+            <th>Win Rate</th>0
+            <th>Best Streak</th>
         </tr>
     </thead>
     <tbody>
@@ -31,6 +32,9 @@
                 {% else %}
                     N/A
                 {% endif %}
+            </td>
+            <td>
+                {{ agent.best_streak }}x
             </td>
         </tr>
         {% endfor %}
