@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, redirect, url_for
+from flask import Flask, jsonify, render_template, redirect, url_for, Cache
 from database import get_upcoming_matches, get_finished_matches, get_agents, get_bets_for_match, get_match_by_id, get_agent_bets
 
 from database import init_db, init_agents
@@ -8,7 +8,10 @@ import threading
 from scheduler import update_matches
 
 
+
 app = Flask(__name__)
+
+cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT': 300})
 
 init_db()
 init_agents(AGENTS)
@@ -29,16 +32,19 @@ def index():
     return render_template('index.html', active_page='home')
 
 @app.route('/upcoming')
+@cache.cached(timeout=300)
 def upcoming_matches():
     matches = get_upcoming_matches()
     return render_template("upcoming.html", matches=matches, active_page='upcoming')
 
 @app.route('/finished')
+@cache.cached(timeout=300)
 def finished_matches():
     matches = get_finished_matches()
     return render_template("finished.html", matches=matches, active_page='finished')
 
 @app.route('/dashboard')
+@cache.cached(timeout=300)
 def dashboard():
     agents = get_agents()
     return render_template('dashboard.html', agents=agents, active_page='dashboard')
@@ -48,11 +54,13 @@ def faq():
     return render_template('faq.html', active_page='faq')
 
 @app.route('/agent/<agent_name>')
+@cache.cached(timeout=300, key_prefix='agent_%s')
 def agent_detail(agent_name):
     bets = get_agent_bets(agent_name)
     return render_template('agent.html', agent_name=agent_name, bets=bets)
 
 @app.route('/match/<int:match_id>')
+@cache.cached(timeout=300, key_prefix='match_%s')
 def match_detail(match_id):
     match = get_match_by_id(match_id)
     bets = get_bets_for_match(match_id)
