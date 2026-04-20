@@ -79,6 +79,52 @@ def page_not_found(e):
 def internal_server_error(e):
     return render_template('500.html'), 500
 
+from flask import Response
+
+@app.route('/sitemap.xml')
+def sitemap():
+    xml = '''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://gameprophet.up.railway.app/</loc>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/upcoming</loc>
+        <changefreq>hourly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/finished</loc>
+        <changefreq>hourly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/dashboard</loc>
+        <changefreq>hourly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/faq</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/privacy</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.3</priority>
+    </url>
+</urlset>'''
+    return Response(xml, mimetype='application/xml')
+
+@app.route('/robots.txt')
+def robots():
+    txt = '''User-agent: *
+Allow: /
+Sitemap: https://gameprophet.up.railway.app/sitemap.xml'''
+    return Response(txt, mimetype='text/plain')
+
 import os
 
 if __name__ == "__main__":
