@@ -27,3 +27,22 @@ function convertDatesToLocal() {
 }
 
 document.addEventListener('DOMContentLoaded', convertDatesToLocal);
+
+function openShareModal(matchId) {
+    const url = `${window.location.origin}/match/${matchId}`;
+    document.getElementById('share-link-input').value = url;
+    document.getElementById('share-modal-overlay').classList.add('active');
+}
+
+function closeShareModal() {
+    document.getElementById('share-modal-overlay').classList.remove('active');
+}
+
+function copyShareLink() {
+    const input = document.getElementById('share-link-input');
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = document.querySelector('.share-copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+}

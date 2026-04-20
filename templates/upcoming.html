@@ -33,6 +33,8 @@
                 <span>A: {{ match.odds_away }}</span>
             </div>
             {% endif %}
+
+            <button class="share-btn" onclick="event.preventDefault(); openShareModal('{{ match.match_id }}')">Share</button>
         </div>
     </a>
     {% endfor %}

@@ -56,5 +56,18 @@
     GameProphet is a simulation for entertainment purposes only. This is not financial or investment advice. All predictions are made by AI agents and should not be used as a basis for real betting decisions.
     <br>
     <a href="/privacy" style="color: #58A6FF; text-decoration: none;">Privacy Policy</a>
+
+<div class="share-modal-overlay" id="share-modal-overlay" onclick="closeShareModal()">
+    <div class="share-modal" onclick="event.stopPropagation()">
+        <h3>Share this match</h3>
+        <p>Copy the link below to share this match with others.</p>
+        <div class="share-link-box">
+            <input type="text" class="share-link-input" id="share-link-input" readonly>
+            <button class="share-copy-btn" onclick="copyShareLink()">Copy</button>
+        </div>
+        <button class="share-close-btn" onclick="closeShareModal()">Close</button>
+    </div>
+</div>
+
 </body>
 </html>
