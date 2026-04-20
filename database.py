@@ -46,7 +46,6 @@ def init_db():
             CREATE TABLE IF NOT EXISTS agents (
                 agent_id SERIAL PRIMARY KEY,
                 name TEXT UNIQUE NOT NULL,
-                strategy TEXT NOT NULL,
                 description TEXT,
                 balance REAL NOT NULL DEFAULT 0.0,
                 total_bets INTEGER NOT NULL DEFAULT 0,
@@ -108,10 +107,10 @@ def init_agents(agents):
         cursor = conn.cursor()
         for agent in agents:
             cursor.execute("""
-                INSERT INTO agents (name, strategy, description, balance)
-                VALUES (%s, %s, %s, 0)
+                INSERT INTO agents (name, description, balance)
+                VALUES (%s, %s, 0)
                 ON CONFLICT (name) DO NOTHING
-            """, (agent["name"], agent["strategy"], agent["description"]))
+            """, (agent["name"], agent["description"]))
 
 
 def get_team_recent_matches(team_name, limit=10):
