@@ -182,12 +182,36 @@ def get_agents():
             FROM agents
             ORDER BY balance DESC
         """)
+        agents = cursor.fetchall()
+        
         result = []
-        for row in cursor.fetchall():
+        for row in agents:
             r = dict(row)
             r['win_rate'] = float(r['win_rate']) if r['win_rate'] else None
-            r['best_streak'] = get_agent_best_streak(r['name'])
+            
+            # Pobierz best streak w tym samym połączeniu
+            cursor.execute("""
+                SELECT result FROM bets
+                WHERE agent_name = %s
+                AND result IS NOT NULL
+                AND skipped = FALSE
+                ORDER BY created_at ASC
+            """, (r['name'],))
+            
+            bets = cursor.fetchall()
+            best_streak = 0
+            current_streak = 0
+            
+            for bet in bets:
+                if bet['result'] == 'WIN':
+                    current_streak += 1
+                    best_streak = max(best_streak, current_streak)
+                else:
+                    current_streak = 0
+            
+            r['best_streak'] = best_streak
             result.append(r)
+        
         return result
 
 def get_bets_for_match(match_id):
@@ -283,32 +307,7 @@ def get_team_stats(team_name):
             "avg_conceded": round(sum(goals_conceded) / len(goals_conceded), 2),
             "matches_analyzed": len(goals_scored)
         }
-    
 
-def get_agent_best_streak(agent_name):
-    with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("""
-            SELECT result FROM bets
-            WHERE agent_name = %s
-            AND result IS NOT NULL
-            AND skipped = FALSE
-            ORDER BY created_at ASC
-        """, (agent_name,))
-        
-        bets = cursor.fetchall()
-        
-        best_streak = 0
-        current_streak = 0
-        
-        for bet in bets:
-            if bet['result'] == 'WIN':
-                current_streak += 1
-                best_streak = max(best_streak, current_streak)
-            else:
-                current_streak = 0
-        
-        return best_streak
 
 if __name__ == "__main__":
     from ai_agents import AGENTS
