@@ -305,7 +305,7 @@ nav a:hover {
     }
 }
 
-.bmc-button {
-    transform: scale(0.7);
-    transform-origin: left center;
+#bmc-wbtn {
+    transform: scale(0.75) !important;
+    transform-origin: left center !important;
 }
