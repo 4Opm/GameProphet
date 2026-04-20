@@ -15,8 +15,7 @@
             <img src="{{ match.away_crest }}" alt="{{ match.away_team }}" class="match-crest">
             {% endif %}
         </div>
-        <span class="date">{{ match.utc_date.split('T')[0] }}</span>
-        <span class="time">{{ match.utc_date.split('T')[1][:5] }}</span>
+        <span data-utc="{{ match.utc_date }}"></span>
         {% if match.odds_home %}
         <div class="match-odds">
             <span>H: {{ match.odds_home }}</span>

@@ -25,8 +25,7 @@
                 <img src="{{ match.away_crest }}" alt="{{ match.away_team }}" style="width: 32px; height: 32px; object-fit: contain;">
                 {% endif %}
             </div>
-            <span class="date">{{ match.utc_date.split('T')[0] }}</span>
-            <span class="time">{{ match.utc_date.split('T')[1][:5] }}</span>
+            <span data-utc="{{ match.utc_date }}"></span>
             {% if match.odds_home %}
             <div style="margin-top: 8px; font-size: 0.85em; color: #58A6FF;">
                 <span>H: {{ match.odds_home }}</span>
