@@ -31,6 +31,8 @@
                 {% else %}Draw{% endif %}
             </p>
         {% endif %}
+
+        <button class="share-btn" onclick="openShareModal('{{ match.match_id }}')">Share</button>
     </div>
 
     {% set home_count = bets | selectattr('prediction', 'equalto', 'HOME') | list | length %}

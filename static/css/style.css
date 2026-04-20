@@ -40,6 +40,9 @@ nav {
     cursor: pointer;
     text-align: center;
     transition: transform 0.2s ease, border-color 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .match-card:hover {
