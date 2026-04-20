@@ -18,7 +18,7 @@ a:visited {
 
 nav {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 20px;
     padding: 16px 32px;
     border-bottom: 1px solid #58A6FF;
@@ -275,18 +275,6 @@ nav a:hover {
     }
 }
 
-@media (max-width: 768px) {
-    nav {
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 12px 16px;
-        justify-content: center;
-    }
-    
-    nav a {
-        font-size: 0.85em;
-    }
-}
 
 @media (max-width: 768px) {
     .matches-grid {
@@ -315,4 +303,9 @@ nav a:hover {
         font-size: 0.75em;
         padding: 8px 16px;
     }
+}
+
+.bmc-button {
+    transform: scale(0.7);
+    transform-origin: left center;
 }
