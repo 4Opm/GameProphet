@@ -109,5 +109,5 @@ def get_average_odds(bookmakers, home_team, away_team):
     )
 
 def update_all_odds():
-    for league_code in LEAGUE_TO_SPORT:
+    for league_code in LEAGUES:
         update_odds_for_league(league_code)
