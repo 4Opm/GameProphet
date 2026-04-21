@@ -144,6 +144,7 @@ def get_unresolved_bets():
             FROM bets
             JOIN matches ON bets.match_id = matches.match_id
             WHERE bets.result IS NULL
+            AND bets.skipped = FALSE
             AND matches.status = 'FINISHED'
         """)
         return [dict(row) for row in cursor.fetchall()]
