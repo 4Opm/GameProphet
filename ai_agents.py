@@ -302,7 +302,16 @@ def place_bets_for_match(match):
             time.sleep(2)
         
         if not parsed or not parsed["prediction"] or parsed["stake_pct"] is None:
-            print(f"{agent['name']}: failed after 3 attempts, skipping")
+            print(f"{agent['name']}: decided to skip this match")
+            save_bet(
+                agent_name=agent["name"],
+                match_id=match["match_id"],
+                prediction=parsed["prediction"],
+                stake_pct=0,
+                stake_amount=0,
+                reasoning=None,
+                skipped=True
+            )
             continue
 
         if parsed["stake_pct"] == 0:
