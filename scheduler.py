@@ -4,6 +4,8 @@ from time import sleep
 from datetime import datetime, timedelta
 from config import LEAGUES
 
+
+
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from ai_agents import place_bets_for_match, settle_bets
@@ -11,6 +13,8 @@ from ai_agents import place_bets_for_match, settle_bets
 from odds_fetcher import update_all_odds
 
 from datetime import datetime
+
+last_odds_update = None
 
 def update_matches():
     global last_odds_update
