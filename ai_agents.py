@@ -288,11 +288,21 @@ def place_bets_for_match(match):
             continue
         balance = 1000
         
-        response = get_agent_prediction(agent, match)
-        parsed = parse_prediction(response)
+        # Próbuj maksymalnie 3 razy
+        parsed = None
+        for attempt in range(3):
+            try:
+                response = get_agent_prediction(agent, match)
+                parsed = parse_prediction(response)
+                if parsed["prediction"] and parsed["stake_pct"] is not None:
+                    break
+                print(f"{agent['name']}: invalid response on attempt {attempt + 1}, retrying...")
+            except Exception as e:
+                print(f"{agent['name']}: error on attempt {attempt + 1}: {e}")
+            time.sleep(2)
         
-        if not parsed["prediction"] or not parsed["stake_pct"]:
-            print(f"{agent['name']}: failed to parse response, skipping")
+        if not parsed or not parsed["prediction"] or parsed["stake_pct"] is None:
+            print(f"{agent['name']}: failed after 3 attempts, skipping")
             continue
 
         if parsed["stake_pct"] == 0:
@@ -320,8 +330,7 @@ def place_bets_for_match(match):
             stake_amount=stake_amount,
             reasoning=parsed["reasoning"]
         )
-        time.sleep(3) 
-
+        time.sleep(3)
 
 
 def settle_bets():
