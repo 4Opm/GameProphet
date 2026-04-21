@@ -216,7 +216,9 @@ def get_agents():
 def get_bets_for_match(match_id):
     with get_db() as conn:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("SELECT * FROM bets WHERE match_id = %s", (match_id,))
+        cursor.execute("""
+            SELECT * FROM bets WHERE match_id = %s AND skipped = FALSE
+        """, (match_id,))
         return [dict(row) for row in cursor.fetchall()]
 
 def get_match_by_id(match_id):
@@ -262,7 +264,7 @@ def get_agent_bets(agent_name):
                    matches.odds_home, matches.odds_draw, matches.odds_away
             FROM bets
             JOIN matches ON bets.match_id = matches.match_id
-            WHERE bets.agent_name = %s
+            WHERE bets.agent_name = %s AND bets.skipped = FALSE
             ORDER BY matches.utc_date DESC
         """, (agent_name,))
         return [dict(row) for row in cursor.fetchall()]
