@@ -8,7 +8,7 @@ from ai_agents import AGENTS
 import threading
 from scheduler import update_matches
 
-
+from config import LEAGUES
 
 app = Flask(__name__)
 
@@ -36,13 +36,13 @@ def index():
 @cache.cached(timeout=300)
 def upcoming_matches():
     matches = get_upcoming_matches()
-    return render_template("upcoming.html", matches=matches, active_page='upcoming')
+    return render_template("upcoming.html", matches=matches, leagues=LEAGUES, active_page='upcoming')
 
 @app.route('/finished')
 @cache.cached(timeout=300)
 def finished_matches():
     matches = get_finished_matches()
-    return render_template("finished.html", matches=matches, active_page='finished')
+    return render_template("finished.html", matches=matches, leagues=LEAGUES, active_page='finished')
 
 @app.route('/dashboard')
 @cache.cached(timeout=300)
@@ -114,6 +114,56 @@ def sitemap():
         <loc>https://gameprophet.up.railway.app/privacy</loc>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/agent/The%20Conservative</loc>
+        <changefreq>daily</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/agent/The%20Aggressive</loc>
+        <changefreq>daily</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/agent/The%20Analyst</loc>
+        <changefreq>daily</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/agent/The%20Lucky%20One</loc>
+        <changefreq>daily</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/agent/The%20Follower</loc>
+        <changefreq>daily</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/agent/The%20Quant</loc>
+        <changefreq>daily</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/agent/The%20Momentum%20Trader</loc>
+        <changefreq>daily</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/agent/The%20Draw%20Specialist</loc>
+        <changefreq>daily</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/agent/The%20Home%20Fortress</loc>
+        <changefreq>daily</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://gameprophet.up.railway.app/agent/The%20Contrarian</loc>
+        <changefreq>daily</changefreq>
+        <priority>0.6</priority>
     </url>
 </urlset>'''
     return Response(xml, mimetype='application/xml')

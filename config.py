@@ -3,11 +3,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-LEAGUES = [
-    "PL",
-    "BL1",
-    "SA",
-]
+
+LEAGUES = {
+    "PL": {
+        "name": "Premier League",
+        "odds_key": "soccer_epl",
+    },
+    "BL1": {
+        "name": "Bundesliga",
+        "odds_key": "soccer_germany_bundesliga",
+    },
+    "SA": {
+        "name": "Serie A",
+        "odds_key": "soccer_italy_serie_a",
+    },
+}
+
 OLLAMA_MODEL = "llama3.2"
 
 AI_PROVIDER = "groq" # "ollama" for local model

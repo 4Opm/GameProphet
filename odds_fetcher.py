@@ -1,4 +1,5 @@
 import requests
+from config import LEAGUES
 from config import ODDS_API_KEY
 from database import get_db
 from thefuzz import process
@@ -10,12 +11,6 @@ load_dotenv()
 
 ODDS_API_BASE = "https://api.the-odds-api.com/v4"
 
-
-LEAGUE_TO_SPORT = {
-    "PL": "soccer_epl",
-    "BL1": "soccer_germany_bundesliga",
-    "SA": "soccer_italy_serie_a",
-}
 
 def find_matching_team(db_name, api_teams, threshold=60):
     result = process.extractOne(db_name, api_teams)
@@ -67,10 +62,13 @@ def update_odds_for_league(league_code):
         
         print(f"{league_code}: updated odds for {updated} matches")
 
+
 def fetch_odds(league_code):
-    sport = LEAGUE_TO_SPORT.get(league_code)
-    if not sport:
+    league = LEAGUES.get(league_code)
+    if not league:
         return []
+    
+    sport = league["odds_key"]
     
     response = requests.get(
         f"{ODDS_API_BASE}/sports/{sport}/odds",
