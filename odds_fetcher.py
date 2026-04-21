@@ -5,6 +5,7 @@ from database import get_db
 from thefuzz import process
 import psycopg2.extras
 
+from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -40,7 +41,8 @@ def update_odds_for_league(league_code):
                 SELECT match_id, home_team, away_team FROM matches
                 WHERE status IN ('TIMED', 'SCHEDULED')
                 AND league = %s
-            """, (league_code,))
+                AND utc_date <= %s
+            """, (league_code, (datetime.now() + timedelta(days=3)).isoformat()))
             
             db_matches = cursor.fetchall()
             

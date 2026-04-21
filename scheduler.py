@@ -10,7 +10,11 @@ from ai_agents import place_bets_for_match, settle_bets
 
 from odds_fetcher import update_all_odds
 
+from datetime import datetime
+
 def update_matches():
+    global last_odds_update
+
     today = datetime.now().date()
     lastWeek = today - timedelta(days=40)
     nextWeek = today + timedelta(days=7)
@@ -24,7 +28,10 @@ def update_matches():
             save_match(j, i)
         sleep(6)
     
-    update_all_odds()  # najpierw kursy
+    today = datetime.now().date()
+    if last_odds_update != today:
+        update_all_odds()
+        last_odds_update = today
     
     for i in LEAGUES:
         results = fetch_matches(i, lastWeek.isoformat(), nextWeek.isoformat())

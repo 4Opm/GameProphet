@@ -282,6 +282,10 @@ def parse_prediction(response_text):
 from database import save_bet
 
 def place_bets_for_match(match):
+    if not match.get('odds_home'):
+        print(f"No odds available for {match['home_team']} vs {match['away_team']}, skipping")
+        return
+
     for agent in AGENTS:
         if bet_exists(agent["name"], match["match_id"]):
             print(f"{agent['name']}: bet already exists for this match, skipping")
