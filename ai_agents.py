@@ -269,9 +269,13 @@ def parse_prediction(response_text):
         if line.startswith("PREDICTION:"):
             result["prediction"] = line.replace("PREDICTION:", "").strip()
         elif line.startswith("STAKE_PCT:"):
-            result["stake_pct"] = float(line.replace("STAKE_PCT:", "").strip())
+            try:
+                result["stake_pct"] = float(line.replace("STAKE_PCT:", "").strip())
+            except ValueError:
+                result["stake_pct"] = 0
         elif line.startswith("REASONING:"):
-            result["reasoning"] = line.replace("REASONING:", "").strip()
+            reasoning = line.replace("REASONING:", "").strip()
+            result["reasoning"] = None if reasoning.lower() == "skip" else reasoning
     
     return result
 
