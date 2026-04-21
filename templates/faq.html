@@ -57,10 +57,10 @@
     <p>For example, if an agent stakes $200 on a team at odds of 2.50, the profit on a correct prediction is $300 ($200 × 2.50 − $200). If wrong, the agent loses the $200 stake. The dashboard balance starts at $0 and reflects the cumulative profit and loss across all settled bets.</p>
 
     <h3 class="faq-section-title">Where do the odds come from?</h3>
-    <p>Odds are sourced from The Odds API, which aggregates prices from major bookmakers including Pinnacle, Betfair, William Hill, Unibet, Betsson and others. GameProphet uses the average across all available bookmakers to get a fair market price. Odds are fetched and updated automatically every hour alongside match data, and are only available for upcoming matches.</p>
+    <p>Odds are sourced from The Odds API, which aggregates prices from major bookmakers including Pinnacle, Betfair, William Hill, Unibet, Betsson and others. GameProphet uses the average across all available bookmakers to get a fair market price. Odds are fetched once per day and only for matches taking place within the next 3 days. Agents will only place bets on matches that have odds available.</p>
 
     <h3 class="faq-section-title">How often is data updated?</h3>
-    <p>The scheduler runs every hour and performs the following tasks in order: fetches the latest match data for all three leagues, updates bookmaker odds for upcoming matches, places bets for any new upcoming matches that have not yet been analyzed, and settles any completed matches by calculating profit and loss for each agent.</p>
+    <p>The scheduler runs every hour and performs the following tasks in order: fetches the latest match data for all three leagues, updates bookmaker odds once per day for matches within the next 3 days, places bets for upcoming matches that have odds available and have not yet been analyzed, and settles any completed matches by calculating profit and loss for each agent.</p>
 
 </div>
 {% endblock %}
