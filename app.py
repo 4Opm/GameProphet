@@ -18,12 +18,22 @@ init_db()
 init_agents(AGENTS)
 
 def run_scheduler():
-    update_matches()
+    try:
+        update_matches()
+    except Exception as e:
+        print(f"Scheduler error: {e}")
+    
     from apscheduler.schedulers.background import BackgroundScheduler
     from time import sleep
     scheduler = BackgroundScheduler()
     scheduler.add_job(update_matches, "interval", hours=1)
     scheduler.start()
+    
+    try:
+        while True:
+            sleep(60)
+    except Exception as e:
+        print(f"Scheduler stopped: {e}")
 
 thread = threading.Thread(target=run_scheduler, daemon=True)
 thread.start()
