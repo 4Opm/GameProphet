@@ -16,7 +16,7 @@ function convertDatesToLocal() {
         const oneDayMs = 24 * 60 * 60 * 1000;
         const isFinished = el.getAttribute('data-status') === 'FINISHED';
 
-        if (isFinished || diff > oneDayMs) {
+        if (isFinished) {
             el.textContent = matchDate.toLocaleString(navigator.language, {
                 year: 'numeric',
                 month: '2-digit',
@@ -24,8 +24,18 @@ function convertDatesToLocal() {
                 hour: '2-digit',
                 minute: '2-digit'
             });
-        } else if (diff > 0 && diff <= oneDayMs) {
+        } else if (diff <= 0) {
+            el.innerHTML = '<span style="background: #f44336; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; animation: pulse 1s infinite;">LIVE</span>';
+        } else if (diff <= oneDayMs) {
             el.setAttribute('data-countdown', 'true');
+        } else {
+            el.textContent = matchDate.toLocaleString(navigator.language, {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         }
     });
 }
