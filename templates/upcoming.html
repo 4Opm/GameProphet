@@ -25,7 +25,7 @@
                 <img src="{{ match.away_crest }}" alt="{{ match.away_team }}" style="width: 32px; height: 32px; object-fit: contain;">
                 {% endif %}
             </div>
-            <span data-utc="{{ match.utc_date }}"></span>
+            <span data-utc="{{ match.utc_date }}" data-status="{{ match.status }}"></span>
             {% if match.odds_home %}
             <div style="margin-top: 8px; font-size: 0.85em; color: #58A6FF;">
                 <span>H: {{ match.odds_home }}</span>
