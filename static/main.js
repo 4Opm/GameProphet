@@ -75,3 +75,14 @@ function copyShareLink() {
         setTimeout(() => btn.textContent = 'Copy', 2000);
     });
 }
+
+function searchMatches() {
+    const query = document.getElementById('search-input').value.toLowerCase();
+    document.querySelectorAll('.match-card').forEach(card => {
+        const teams = card.querySelector('.teams').textContent.toLowerCase();
+        const link = card.closest('a');
+        if (link) {
+            link.style.display = teams.includes(query) ? '' : 'none';
+        }
+    });
+}

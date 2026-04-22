@@ -372,6 +372,32 @@ nav a:hover {
     background: #161B22;
 }
 
+.filters-container {
+    padding: 16px 32px 0;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.league-select {
+    background: #2F3136;
+    color: #C9D1D9;
+    border: 1px solid #58A6FF;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.search-input {
+    background: #2F3136;
+    color: #C9D1D9;
+    border: 1px solid #58A6FF;
+    padding: 8px 12px;
+    border-radius: 6px;
+    outline: none;
+    flex: 1;
+    max-width: 200px;
+}
+
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }

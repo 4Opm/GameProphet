@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div style="padding: 16px 32px 0;">
-        <select id="league-filter" onchange="filterMatches()" style="background: #2F3136; color: #C9D1D9; border: 1px solid #58A6FF; padding: 8px; border-radius: 6px;">
+    <div class="filters-container">
+        <select id="league-filter" class="league-select" onchange="filterMatches()">
             <option value="all">All leagues</option>
             {% for code, league in leagues.items() %}
             <option value="{{ code }}">{{ league.name }}</option>
             {% endfor %}
         </select>
+        <input id="search-input" type="text" class="search-input" placeholder="Search team..." oninput="searchMatches()">
     </div>
 
     <div class="matches-grid">
