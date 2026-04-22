@@ -51,7 +51,10 @@ function updateCountdowns() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', convertDatesToLocal);
+document.addEventListener('DOMContentLoaded', () => {
+    convertDatesToLocal();
+    updateCountdowns();
+});
 setInterval(updateCountdowns, 1000);
 
 function openShareModal(matchId) {
