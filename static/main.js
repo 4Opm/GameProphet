@@ -14,12 +14,9 @@ function convertDatesToLocal() {
         const now = new Date();
         const diff = matchDate - now;
         const oneDayMs = 24 * 60 * 60 * 1000;
+        const isFinished = el.getAttribute('data-status') === 'FINISHED';
 
-        if (diff > 0 && diff <= oneDayMs) {
-            el.setAttribute('data-countdown', 'true');
-        } else if (diff <= 0) {
-
-        } else {
+        if (isFinished || diff > oneDayMs) {
             el.textContent = matchDate.toLocaleString(navigator.language, {
                 year: 'numeric',
                 month: '2-digit',
@@ -27,6 +24,8 @@ function convertDatesToLocal() {
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        } else if (diff > 0 && diff <= oneDayMs) {
+            el.setAttribute('data-countdown', 'true');
         }
     });
 }
