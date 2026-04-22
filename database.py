@@ -78,7 +78,7 @@ def get_upcoming_matches():
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("""
             SELECT * FROM matches
-            WHERE status = 'TIMED' OR status = 'SCHEDULED'
+            WHERE status = 'TIMED' OR status = 'SCHEDULED' OR status = 'IN_PLAY'
             ORDER BY utc_date
         """)
         return [dict(row) for row in cursor.fetchall()]

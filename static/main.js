@@ -9,24 +9,51 @@ function filterMatches() {
 }
 
 function convertDatesToLocal() {
-    document.querySelectorAll('.date, .time').forEach(el => {
-        el.style.display = 'none';
-    });
-
     document.querySelectorAll('[data-utc]').forEach(el => {
-        const utc = el.getAttribute('data-utc');
-        const date = new Date(utc);
-        el.textContent = date.toLocaleString(navigator.language, {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        const matchDate = new Date(el.getAttribute('data-utc'));
+        const now = new Date();
+        const diff = matchDate - now;
+        const oneDayMs = 24 * 60 * 60 * 1000;
+
+        if (diff > 0 && diff <= oneDayMs) {
+            el.setAttribute('data-countdown', 'true');
+        } else if (diff <= 0) {
+
+        } else {
+            el.textContent = matchDate.toLocaleString(navigator.language, {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    });
+}
+
+function updateCountdowns() {
+    document.querySelectorAll('[data-countdown="true"]').forEach(el => {
+        const matchDate = new Date(el.getAttribute('data-utc'));
+        const now = new Date();
+        const diff = matchDate - now;
+
+        if (diff <= 0) {
+            el.removeAttribute('data-countdown');
+            el.textContent = ''; 
+            el.innerHTML = '<span style="background: #f44336; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; animation: pulse 1s infinite;">LIVE</span>';
+            return;
+        }
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        el.textContent = `${hours}h ${minutes}m ${seconds}s`;
     });
 }
 
 document.addEventListener('DOMContentLoaded', convertDatesToLocal);
+setInterval(updateCountdowns, 1000);
 
 function openShareModal(matchId) {
     const url = `${window.location.origin}/match/${matchId}`;
