@@ -187,7 +187,7 @@ def get_agents():
         result = []
         for row in agents:
             r = dict(row)
-            r['win_rate'] = float(r['win_rate']) if r['win_rate'] else None
+            r['win_rate'] = float(r['win_rate']) if r['win_rate'] is not None else 0.0
             
             # Pobierz best streak w tym samym połączeniu
             cursor.execute("""
