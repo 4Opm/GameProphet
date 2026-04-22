@@ -17,6 +17,10 @@ LEAGUES = {
         "name": "Serie A",
         "odds_key": "soccer_italy_serie_a",
     },
+    "PD": {
+    "name": "La Liga",
+    "odds_key": "soccer_spain_la_liga",
+    },
 }
 
 OLLAMA_MODEL = "llama3.2"
