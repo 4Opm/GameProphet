@@ -1,50 +1,57 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="filters-container">
-        <select id="league-filter" class="league-select" onchange="filterMatches()">
-            <option value="all">All leagues</option>
-            {% for code, league in leagues.items() %}
-            <option value="{{ code }}">{{ league.name }}</option>
-            {% endfor %}
-        </select>
-        <input id="search-input" type="text" class="search-input" placeholder="Search team..." oninput="searchMatches()">
-    </div>
-
-    <div class="matches-grid">
-    {% for match in matches %}
-    <a href="/match/{{ match.match_id }}" style="text-decoration: none; color: inherit;">
-        <div class="match-card" data-league="{{ match.league }}">
-            <span class="league">{{match.league}}</span>
-            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin: 8px 0;">
-                {% if match.home_crest %}
-                <img src="{{ match.home_crest }}" alt="{{ match.home_team }}" style="width: 32px; height: 32px; object-fit: contain;">
-                {% endif %}
-                <p class="teams" style="margin: 0;">{{match.home_team}} vs {{match.away_team}}</p>
-                {% if match.away_crest %}
-                <img src="{{ match.away_crest }}" alt="{{ match.away_team }}" style="width: 32px; height: 32px; object-fit: contain;">
-                {% endif %}
-            </div>
-            {% if match.winner == 'HOME_TEAM' %}
-                Winner: {{ match.home_team }}
-            {% elif match.winner == 'AWAY_TEAM' %}
-                Winner: {{ match.away_team }}
-            {% elif match.winner == 'DRAW' %}
-                Draw
-            {% endif %}
-            <p class="score">{{match.score}}</p>
-            <span data-utc="{{ match.utc_date }}" data-status="{{ match.status }}"></span>
-            {% if match.odds_home %}
-            <div style="margin-top: 8px; font-size: 0.85em; color: #58A6FF;">
-                <span>H: {{ match.odds_home }}</span>
-                <span style="margin: 0 8px;">D: {{ match.odds_draw }}</span>
-                <span>A: {{ match.odds_away }}</span>
-            </div>
-            {% endif %}
-
-            <button class="share-btn" onclick="event.preventDefault(); openShareModal('{{ match.match_id }}')">Share</button>
-        </div>
-    </a>
+<div class="filters-container">
+  <select id="league-filter" class="league-select" onchange="filterMatches()">
+    <option value="all">All leagues</option>
+    {% for code, league in leagues.items() %}
+    <option value="{{ code }}">{{ league.name }}</option>
     {% endfor %}
+  </select>
+  <input id="search-input" type="text" class="search-input" placeholder="Search team..." oninput="searchMatches()">
+</div>
+
+<div class="matches-grid">
+  {% for match in matches %}
+  <a href="/match/{{ match.match_id }}" style="text-decoration:none;color:inherit;">
+    <div class="match-card" data-league="{{ match.league }}">
+      <span class="league-badge">{{ match.league }}</span>
+
+      <div class="match-crests-row">
+        {% if match.home_crest %}
+        <img src="{{ match.home_crest }}" alt="{{ match.home_team }}" class="crest-img">
+        {% endif %}
+        <p class="teams">{{ match.home_team }} vs {{ match.away_team }}</p>
+        {% if match.away_crest %}
+        <img src="{{ match.away_crest }}" alt="{{ match.away_team }}" class="crest-img">
+        {% endif %}
+      </div>
+
+      {% if match.score %}
+      <div class="match-score-display">{{ match.score }}</div>
+      {% endif %}
+
+      {% if match.winner == 'HOME_TEAM' %}
+        <span class="match-winner">{{ match.home_team }} won</span>
+      {% elif match.winner == 'AWAY_TEAM' %}
+        <span class="match-winner">{{ match.away_team }} won</span>
+      {% elif match.winner == 'DRAW' %}
+        <span class="match-winner match-draw">Draw</span>
+      {% endif %}
+
+      <span class="match-meta" data-utc="{{ match.utc_date }}" data-status="{{ match.status }}"></span>
+
+      {% if match.odds_home %}
+      <div class="odds-row">
+        <span class="odd-pill">H <span>{{ match.odds_home }}</span></span>
+        <span class="odd-pill">D <span>{{ match.odds_draw }}</span></span>
+        <span class="odd-pill">A <span>{{ match.odds_away }}</span></span>
+      </div>
+      {% endif %}
+
+      <button class="share-btn" onclick="event.preventDefault(); openShareModal('{{ match.match_id }}')">Share</button>
     </div>
+  </a>
+  {% endfor %}
+</div>
 {% endblock %}

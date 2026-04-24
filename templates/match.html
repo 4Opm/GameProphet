@@ -2,122 +2,126 @@
 
 {% block content %}
 <div class="match-detail-container">
-    <a href="javascript:history.back()" class="match-detail-back">← Back</a>
-    
-    <div class="match-card match-detail-card">
-        <span class="league">{{ match.league }}</span>
-        <div class="match-crests">
-            {% if match.home_crest %}
-            <img src="{{ match.home_crest }}" alt="{{ match.home_team }}" class="match-crest">
-            {% endif %}
-            <p class="teams" style="margin: 0;">{{ match.home_team }} vs {{ match.away_team }}</p>
-            {% if match.away_crest %}
-            <img src="{{ match.away_crest }}" alt="{{ match.away_team }}" class="match-crest">
-            {% endif %}
-        </div>
-        <span data-utc="{{ match.utc_date }}"></span>
-        {% if match.odds_home %}
-        <div class="match-odds">
-            <span>H: {{ match.odds_home }}</span>
-            <span>D: {{ match.odds_draw }}</span>
-            <span>A: {{ match.odds_away }}</span>
-        </div>
-        {% endif %}
-        {% if match.status == 'FINISHED' %}
-            <p class="match-score">{{ match.score }}</p>
-            <p>
-                {% if match.winner == 'HOME_TEAM' %}Winner: {{ match.home_team }}
-                {% elif match.winner == 'AWAY_TEAM' %}Winner: {{ match.away_team }}
-                {% else %}Draw{% endif %}
-            </p>
-        {% endif %}
+  <a href="javascript:history.back()" class="back-link">← Back</a>
 
-        <button class="share-btn" onclick="openShareModal('{{ match.match_id }}')">Share</button>
+  <div class="match-detail-card">
+    <span class="league-badge">{{ match.league }}</span>
+
+    <div class="match-detail-crests">
+      {% if match.home_crest %}
+      <img src="{{ match.home_crest }}" alt="{{ match.home_team }}" class="match-detail-crest">
+      {% endif %}
+      <p class="teams" style="font-size:1.15rem;">{{ match.home_team }} vs {{ match.away_team }}</p>
+      {% if match.away_crest %}
+      <img src="{{ match.away_crest }}" alt="{{ match.away_team }}" class="match-detail-crest">
+      {% endif %}
     </div>
 
-    {% set home_count = bets | selectattr('prediction', 'equalto', 'HOME') | list | length %}
-    {% set draw_count = bets | selectattr('prediction', 'equalto', 'DRAW') | list | length %}
-    {% set away_count = bets | selectattr('prediction', 'equalto', 'AWAY') | list | length %}
-    {% set total = home_count + draw_count + away_count %}
+    <span class="match-meta" data-utc="{{ match.utc_date }}" data-status="{{ match.status }}"></span>
 
-    {% if total > 0 %}
-    <div class="consensus-container">
-        <h4 class="consensus-title">Agent consensus</h4>
-        
-        <div class="consensus-bar-container">
-            <div class="consensus-bar-label">
-                <span>HOME</span>
-                <span>{{ home_count }} agent{{ 's' if home_count != 1 }}</span>
-            </div>
-            <div class="consensus-bar-bg">
-                <div class="consensus-bar-home" style="width: {{ (home_count / total * 100)|int }}%;"></div>
-            </div>
-        </div>
-
-        <div class="consensus-bar-container">
-            <div class="consensus-bar-label">
-                <span>DRAW</span>
-                <span>{{ draw_count }} agent{{ 's' if draw_count != 1 }}</span>
-            </div>
-            <div class="consensus-bar-bg">
-                <div class="consensus-bar-draw" style="width: {{ (draw_count / total * 100)|int }}%;"></div>
-            </div>
-        </div>
-
-        <div class="consensus-bar-container">
-            <div class="consensus-bar-label">
-                <span>AWAY</span>
-                <span>{{ away_count }} agent{{ 's' if away_count != 1 }}</span>
-            </div>
-            <div class="consensus-bar-bg">
-                <div class="consensus-bar-away" style="width: {{ (away_count / total * 100)|int }}%;"></div>
-            </div>
-        </div>
+    {% if match.odds_home %}
+    <div class="match-detail-odds">
+      <span class="odd-pill">Home <span>{{ match.odds_home }}</span></span>
+      <span class="odd-pill">Draw <span>{{ match.odds_draw }}</span></span>
+      <span class="odd-pill">Away <span>{{ match.odds_away }}</span></span>
     </div>
     {% endif %}
 
-    <h3 class="match-predictions-title">AI Predictions</h3>
-    
-    {% if bets %}
-    <table class="dashboard-table">
-        <thead>
-            <tr>
-                <th>Agent</th>
-                <th>Prediction</th>
-                <th>Odds</th>
-                <th>Stake</th>
-                <th>Amount</th>
-                <th>Result</th>
-                <th>Profit/Loss</th>
-                <th>Reasoning</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for bet in bets %}
-            <tr>
-                <td>{{ bet.agent_name }}</td>
-                <td class="bet-prediction">{{ bet.prediction }}</td>
-                <td>
-                    {% if bet.prediction == 'HOME' %}{{ match.odds_home or 'N/A' }}
-                    {% elif bet.prediction == 'AWAY' %}{{ match.odds_away or 'N/A' }}
-                    {% else %}{{ match.odds_draw or 'N/A' }}
-                    {% endif %}
-                </td>
-                <td>{{ bet.stake_pct }}%</td>
-                <td>${{ "%.2f"|format(bet.stake_amount) }}</td>
-                <td class="{% if bet.result == 'WIN' %}profit{% elif bet.result == 'LOSS' %}loss{% endif %}">
-                    {{ bet.result if bet.result else 'Pending' }}
-                </td>
-                <td class="{% if bet.profit_loss and bet.profit_loss > 0 %}profit{% elif bet.profit_loss and bet.profit_loss < 0 %}loss{% endif %}">
-                    {% if bet.profit_loss %}${{ "%.2f"|format(bet.profit_loss) }}{% else %}N/A{% endif %}
-                </td>
-                <td class="bet-reasoning">{{ bet.reasoning }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-        <p class="no-predictions">No predictions yet for this match.</p>
+    {% if match.status == 'FINISHED' %}
+    <div class="match-detail-score">{{ match.score }}</div>
+    <div class="match-detail-winner">
+      {% if match.winner == 'HOME_TEAM' %}{{ match.home_team }} won
+      {% elif match.winner == 'AWAY_TEAM' %}{{ match.away_team }} won
+      {% else %}Draw{% endif %}
+    </div>
     {% endif %}
+
+    <button class="share-btn" onclick="openShareModal('{{ match.match_id }}')">Share</button>
+  </div>
+
+  {% set home_count = bets | selectattr('prediction', 'equalto', 'HOME') | list | length %}
+  {% set draw_count = bets | selectattr('prediction', 'equalto', 'DRAW') | list | length %}
+  {% set away_count = bets | selectattr('prediction', 'equalto', 'AWAY') | list | length %}
+  {% set total = home_count + draw_count + away_count %}
+
+  {% if total > 0 %}
+  <div class="consensus-container">
+    <div class="consensus-title">Agent Consensus</div>
+
+    <div class="consensus-bar-container">
+      <div class="consensus-bar-label">
+        <span>Home</span>
+        <span>{{ home_count }} agent{{ 's' if home_count != 1 }}</span>
+      </div>
+      <div class="consensus-bar-bg">
+        <div class="consensus-bar-home" style="width:{{ ((home_count / total * 100)|int) if total > 0 else 0 }}%;"></div>
+      </div>
+    </div>
+
+    <div class="consensus-bar-container">
+      <div class="consensus-bar-label">
+        <span>Draw</span>
+        <span>{{ draw_count }} agent{{ 's' if draw_count != 1 }}</span>
+      </div>
+      <div class="consensus-bar-bg">
+        <div class="consensus-bar-draw" style="width:{{ ((draw_count / total * 100)|int) if total > 0 else 0 }}%;"></div>
+      </div>
+    </div>
+
+    <div class="consensus-bar-container">
+      <div class="consensus-bar-label">
+        <span>Away</span>
+        <span>{{ away_count }} agent{{ 's' if away_count != 1 }}</span>
+      </div>
+      <div class="consensus-bar-bg">
+        <div class="consensus-bar-away" style="width:{{ ((away_count / total * 100)|int) if total > 0 else 0 }}%;"></div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="section-title">AI Predictions</div>
+
+  {% if bets %}
+  <table class="dashboard-table" style="margin:0;width:100%;">
+    <thead>
+      <tr>
+        <th>Agent</th>
+        <th>Prediction</th>
+        <th>Odds</th>
+        <th>Stake</th>
+        <th>Amount</th>
+        <th>Result</th>
+        <th>P/L</th>
+        <th>Reasoning</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for bet in bets %}
+      <tr>
+        <td style="font-family:var(--display);font-weight:600;font-size:.85rem;">{{ bet.agent_name }}</td>
+        <td class="bet-prediction">{{ bet.prediction }}</td>
+        <td style="font-family:var(--mono);font-size:.78rem;color:var(--muted);">
+          {% if bet.prediction == 'HOME' %}{{ match.odds_home or '—' }}
+          {% elif bet.prediction == 'AWAY' %}{{ match.odds_away or '—' }}
+          {% else %}{{ match.odds_draw or '—' }}
+          {% endif %}
+        </td>
+        <td style="font-family:var(--mono);font-size:.78rem;color:var(--muted);">{{ bet.stake_pct }}%</td>
+        <td style="font-family:var(--mono);font-size:.78rem;">${{ "%.0f"|format(bet.stake_amount) }}</td>
+        <td class="{% if bet.result == 'WIN' %}profit{% elif bet.result == 'LOSS' %}loss{% endif %}" style="font-family:var(--mono);font-size:.78rem;">
+          {{ bet.result if bet.result else 'Pending' }}
+        </td>
+        <td class="{% if bet.profit_loss and bet.profit_loss > 0 %}profit{% elif bet.profit_loss and bet.profit_loss < 0 %}loss{% endif %}" style="font-family:var(--mono);font-size:.78rem;">
+          {% if bet.profit_loss %}${{ "%.0f"|format(bet.profit_loss) }}{% else %}—{% endif %}
+        </td>
+        <td class="bet-reasoning">{{ bet.reasoning }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="no-predictions">No predictions yet for this match.</p>
+  {% endif %}
 </div>
 {% endblock %}

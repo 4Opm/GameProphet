@@ -1,67 +1,80 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="faq-container">
+<div class="content-container">
+  <h1 class="content-title">Frequently Asked Questions</h1>
 
-    <h2 class="faq-title">Frequently Asked Questions</h2>
-
-    <h3 class="faq-section-title">What is GameProphet?</h3>
-    <p>GameProphet is a football match prediction simulation powered by AI. Ten autonomous agents independently analyze upcoming matches and place bets based on their own unique strategy. Each agent has a virtual budget of $1,000 available for every single match - this resets per match, not per agent overall. The goal is to track which strategy performs best over time across real match data from top European leagues.</p>
+  <div class="content-section">
+    <h3>What is GameProphet?</h3>
+    <p>GameProphet is a football match prediction simulation powered by AI. Ten autonomous agents independently analyze upcoming matches and place bets based on their own unique strategy. Each agent has a virtual budget of $1,000 available for every single match — this resets per match, not per agent overall. The goal is to track which strategy performs best over time across real match data from top European leagues.</p>
     <p>This is purely a simulation for entertainment and educational purposes. No real money is involved.</p>
+  </div>
 
-    <h3 class="faq-section-title">Which leagues are covered?</h3>
-    <p>GameProphet currently tracks matches from four major European leagues:</p>
+  <div class="content-section">
+    <h3>Which leagues are covered?</h3>
     <ul>
-        <li><strong class="faq-agent-name">Premier League</strong> — Top division of English football</li>
-        <li><strong class="faq-agent-name">Bundesliga</strong> — Top division of German football</li>
-        <li><strong class="faq-agent-name">Serie A</strong> — Top division of Italian football</li>
-        <li><strong class="faq-agent-name">La Liga</strong> — Top division of Spanish football</li>
+      <li><strong class="faq-agent-name">Premier League</strong> — Top division of English football</li>
+      <li><strong class="faq-agent-name">Bundesliga</strong> — Top division of German football</li>
+      <li><strong class="faq-agent-name">Serie A</strong> — Top division of Italian football</li>
+      <li><strong class="faq-agent-name">La Liga</strong> — Top division of Spanish football</li>
     </ul>
-    <p>Match data is fetched automatically from the football-data.org API and updated every hour.</p>
+    <p style="margin-top:12px;">Match data is fetched automatically from the football-data.org API and updated every hour.</p>
+  </div>
 
-    <h3 class="faq-section-title">What data do the agents receive?</h3>
+  <div class="content-section">
+    <h3>What data do the agents receive?</h3>
     <p>Before making a prediction, each agent receives a detailed context package containing:</p>
     <ul>
-        <li>Home and away team names, league and match date</li>
-        <li>Current bookmaker odds (HOME / DRAW / AWAY) averaged across multiple bookmakers</li>
-        <li>League standings for both teams — position, points, wins, draws, losses and goal difference</li>
-        <li>Average goals scored and conceded per match over recent games</li>
-        <li>Last 10 HOME games for the home team</li>
-        <li>Last 10 AWAY games for the home team</li>
-        <li>Last 10 HOME games for the away team</li>
-        <li>Last 10 AWAY games for the away team</li>
+      <li>Home and away team names, league and match date</li>
+      <li>Current bookmaker odds (HOME / DRAW / AWAY) averaged across multiple bookmakers</li>
+      <li>League standings for both teams — position, points, wins, draws, losses and goal difference</li>
+      <li>Average goals scored and conceded per match over recent games</li>
+      <li>Last 10 HOME games for the home team</li>
+      <li>Last 10 AWAY games for the home team</li>
+      <li>Last 10 HOME games for the away team</li>
+      <li>Last 10 AWAY games for the away team</li>
     </ul>
-    <p>This gives each agent a comprehensive picture of both teams before making a decision.</p>
+  </div>
 
-    <h3 class="faq-section-title">How do the agents work?</h3>
+  <div class="content-section">
+    <h3>How do the agents work?</h3>
     <p>Each agent is powered by Llama 3.3 70B running on Groq — a large language model that analyzes the match context and returns a structured prediction. Each agent has a unique system prompt that defines its betting personality and strategy. The model returns three values: a prediction (HOME, DRAW or AWAY), a stake percentage and a one sentence reasoning explaining the decision.</p>
     <p>If an agent sets the stake to 0%, it means the agent decided to skip the match due to insufficient confidence. This decision is final and the agent will not reconsider it.</p>
+  </div>
 
-    <h3 class="faq-section-title">Meet the agents</h3>
+  <div class="content-section">
+    <h3>Meet the agents</h3>
     <ul>
-        <li><strong class="faq-agent-name">The Conservative</strong> — Only bets on clear favorites with odds below 1.7. Stakes between 5% and 60% depending on confidence. Skips matches where no clear favorite exists.</li>
-        <li><strong class="faq-agent-name">The Aggressive</strong> — Goes big on every match regardless of confidence. Stakes between 20% and 100%. Never skips a match.</li>
-        <li><strong class="faq-agent-name">The Analyst</strong> — Analyzes all available data before making a decision. Stakes between 5% and 55%. Skips if data is inconclusive.</li>
-        <li><strong class="faq-agent-name">The Lucky One</strong> — Ignores all data and bets purely on instinct. Stakes between 5% and 100% randomly. Reasoning is completely absurd.</li>
-        <li><strong class="faq-agent-name">The Follower</strong> — Always bets on the team higher in the league standings. Stakes between 5% and 65% based on the gap in positions.</li>
-        <li><strong class="faq-agent-name">The Quant</strong> — Looks for value bets where odds seem too high relative to team quality. Stakes between 5% and 60%. Skips if no value is found.</li>
-        <li><strong class="faq-agent-name">The Momentum Trader</strong> — Only bets on teams currently on a winning streak. Stakes between 10% and 60%. Skips if no team is on a streak.</li>
-        <li><strong class="faq-agent-name">The Draw Specialist</strong> — Looks for matches likely to end in a draw based on form and odds. Stakes between 5% and 55%. Skips if no draw signals found.</li>
-        <li><strong class="faq-agent-name">The Home Fortress</strong> — Only bets on home teams with strong home form. Stakes between 10% and 60% based on home winning streak. Skips if home form is weak.</li>
-        <li><strong class="faq-agent-name">The Contrarian</strong> — Always bets against what the bookmakers suggest. Stakes between 5% and 60%. Never skips.</li>
+      <li><strong class="faq-agent-name">The Conservative</strong> — Only bets on clear favorites with odds below 1.7. Stakes between 5% and 60% depending on confidence. Skips matches where no clear favorite exists.</li>
+      <li><strong class="faq-agent-name">The Aggressive</strong> — Goes big on every match regardless of confidence. Stakes between 20% and 100%. Never skips a match.</li>
+      <li><strong class="faq-agent-name">The Analyst</strong> — Analyzes all available data before making a decision. Stakes between 5% and 55%. Skips if data is inconclusive.</li>
+      <li><strong class="faq-agent-name">The Lucky One</strong> — Ignores all data and bets purely on instinct. Stakes between 5% and 100% randomly. Reasoning is completely absurd.</li>
+      <li><strong class="faq-agent-name">The Follower</strong> — Always bets on the team higher in the league standings. Stakes between 5% and 65% based on the gap in positions.</li>
+      <li><strong class="faq-agent-name">The Quant</strong> — Looks for value bets where odds seem too high relative to team quality. Stakes between 5% and 60%. Skips if no value is found.</li>
+      <li><strong class="faq-agent-name">The Momentum Trader</strong> — Only bets on teams currently on a winning streak. Stakes between 10% and 60%. Skips if no team is on a streak.</li>
+      <li><strong class="faq-agent-name">The Draw Specialist</strong> — Looks for matches likely to end in a draw based on form and odds. Stakes between 5% and 55%. Skips if no draw signals found.</li>
+      <li><strong class="faq-agent-name">The Home Fortress</strong> — Only bets on home teams with strong home form. Stakes between 10% and 60% based on home winning streak. Skips if home form is weak.</li>
+      <li><strong class="faq-agent-name">The Contrarian</strong> — Always bets against what the bookmakers suggest. Stakes between 5% and 60%. Never skips.</li>
     </ul>
+  </div>
 
-    <h3 class="faq-section-title">How is profit and loss calculated?</h3>
+  <div class="content-section">
+    <h3>How is profit and loss calculated?</h3>
     <p>Each agent has a fixed virtual budget of $1,000 per match — every match is treated independently and the full $1,000 is available regardless of previous results. The stake amount is a percentage of this $1,000 budget chosen by the agent for each match.</p>
     <p>If the prediction is correct, profit is calculated using real bookmaker odds:</p>
-    <p><strong>profit = stake × odds − stake</strong></p>
+    <div class="formula-block">profit = stake × odds − stake</div>
     <p>For example, if an agent stakes $200 on a team at odds of 2.50, the profit on a correct prediction is $300 ($200 × 2.50 − $200). If wrong, the agent loses the $200 stake. The dashboard balance starts at $0 and reflects the cumulative profit and loss across all settled bets.</p>
+  </div>
 
-    <h3 class="faq-section-title">Where do the odds come from?</h3>
+  <div class="content-section">
+    <h3>Where do the odds come from?</h3>
     <p>Odds are sourced from The Odds API, which aggregates prices from major bookmakers including Pinnacle, Betfair, William Hill, Unibet, Betsson and others. GameProphet uses the average across all available bookmakers to get a fair market price. Odds are fetched once per day and only for matches taking place within the next 3 days. Agents will only place bets on matches that have odds available.</p>
+  </div>
 
-    <h3 class="faq-section-title">How often is data updated?</h3>
-    <p>The scheduler runs every hour and performs the following tasks in order: fetches the latest match data for all three leagues, updates bookmaker odds once per day for matches within the next 3 days, places bets for upcoming matches that have odds available and have not yet been analyzed, and settles any completed matches by calculating profit and loss for each agent.</p>
+  <div class="content-section">
+    <h3>How often is data updated?</h3>
+    <p>The scheduler runs every hour and performs the following tasks in order: fetches the latest match data for all four leagues, updates bookmaker odds once per day for matches within the next 3 days, places bets for upcoming matches that have odds available and have not yet been analyzed, and settles any completed matches by calculating profit and loss for each agent.</p>
+  </div>
 
 </div>
 {% endblock %}

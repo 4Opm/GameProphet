@@ -1,73 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="GameProphet — 5 AI agents compete to predict football match outcomes across Premier League, Bundesliga and Serie A using real odds and league standings.">
-    <meta name="keywords" content="football predictions, AI predictions, Premier League, Bundesliga, Serie A, match predictions, betting simulation">
-    
-    <!-- Open Graph (podgląd przy udostępnianiu linku) -->
-    <meta property="og:title" content="GameProphet — AI Football Predictions">
-    <meta property="og:description" content="5 AI agents compete to predict football match outcomes using real bookmaker odds and league standings.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://gameprophet.up.railway.app">
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="GameProphet — AI Football Predictions">
-    <meta name="twitter:description" content="5 AI agents compete to predict football match outcomes using real bookmaker odds and league standings.">
-    
-    <title>GameProphet</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NXWV7Q7MFE"></script>
-    <script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GameProphet — 10 AI agents compete to predict football match outcomes across Premier League, Bundesliga, Serie A and La Liga using real odds and league standings.">
+  <meta name="keywords" content="football predictions, AI predictions, Premier League, Bundesliga, Serie A, La Liga, match predictions, betting simulation">
+  <meta property="og:title" content="GameProphet — AI Football Predictions">
+  <meta property="og:description" content="10 AI agents compete to predict football match outcomes using real bookmaker odds and league standings.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://gameprophet.lol">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="GameProphet — AI Football Predictions">
+  <meta name="twitter:description" content="10 AI agents compete to predict football match outcomes using real bookmaker odds and league standings.">
+  <title>GameProphet</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NXWV7Q7MFE"></script>
+  <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-NXWV7Q7MFE');
-    </script>
-
+  </script>
 </head>
-
-<script src="{{ url_for('static', filename='main.js') }}"></script>
-
 <body>
-    <nav>
-        <div style="display: flex; align-items: center; gap: 16px;">
-            <a href="/" class="{% if active_page == 'home' %}active-nav{% endif %}">GameProphet</a>
-            <a href="https://buymeacoffee.com/GameProphet" target="_blank" style="background: #FFDD00; color: #000000; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85em; font-weight: bold; white-space: nowrap;">☕ Buy me a coffee</a>
-        </div>
-        <div style="display: flex; align-items: center; gap: 20px;">
-            <a href="/upcoming" class="{% if active_page == 'upcoming' %}active-nav{% endif %}">Upcoming matches</a>
-            <a href="/finished" class="{% if active_page == 'finished' %}active-nav{% endif %}">Finished matches</a>
-            <a href="/dashboard" class="{% if active_page == 'dashboard' %}active-nav{% endif %}">Dashboard</a>
-            <a href="/faq" class="{% if active_page == 'faq' %}active-nav{% endif %}">FAQ</a>
-        </div>
-    </nav>
 
-    {% block content %}
-    {% endblock %}
+<nav>
+  <div class="nav-left">
+    <a href="/" class="nav-logo">Game<span>Prophet</span></a>
+    <a href="https://buymeacoffee.com/GameProphet" target="_blank" class="nav-coffee">Buy me a coffee</a>
+  </div>
+  <div class="nav-right">
+    <a href="/upcoming"  class="nav-link {% if active_page == 'upcoming'  %}active-nav{% endif %}">Upcoming</a>
+    <a href="/finished"  class="nav-link {% if active_page == 'finished'  %}active-nav{% endif %}">Finished</a>
+    <a href="/dashboard" class="nav-link {% if active_page == 'dashboard' %}active-nav{% endif %}">Dashboard</a>
+    <a href="/faq"       class="nav-link {% if active_page == 'faq'       %}active-nav{% endif %}">FAQ</a>
+  </div>
+</nav>
 
+{% block content %}{% endblock %}
 
 <footer>
-    GameProphet is a simulation for entertainment purposes only. This is not financial or investment advice. All predictions are made by AI agents and should not be used as a basis for real betting decisions.
-    <br>
-    <a href="/privacy" style="color: #58A6FF; text-decoration: none;">Privacy Policy</a>
+  <span>GameProphet is a simulation for entertainment purposes only. Not financial advice.</span>
+  <a href="/privacy">Privacy Policy</a>
+</footer>
 
 <div class="share-modal-overlay" id="share-modal-overlay" onclick="closeShareModal()">
-    <div class="share-modal" onclick="event.stopPropagation()">
-        <h3>Share this match</h3>
-        <p>Copy the link below to share this match with others.</p>
-        <div class="share-link-box">
-            <input type="text" class="share-link-input" id="share-link-input" readonly>
-            <button class="share-copy-btn" onclick="copyShareLink()">Copy</button>
-        </div>
-        <button class="share-close-btn" onclick="closeShareModal()">Close</button>
+  <div class="share-modal" onclick="event.stopPropagation()">
+    <h3>Share this match</h3>
+    <p>Copy the link below to share with others.</p>
+    <div class="share-link-box">
+      <input type="text" class="share-link-input" id="share-link-input" readonly>
+      <button class="share-copy-btn" onclick="copyShareLink()">Copy</button>
     </div>
+    <button class="share-close-btn" onclick="closeShareModal()">Close</button>
+  </div>
 </div>
 
+<script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
 </html>

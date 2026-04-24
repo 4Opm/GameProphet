@@ -1,41 +1,43 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2 class="dashboard-title">AI Agents Dashboard</h2>
+<div class="page-header">
+  <h1 class="page-title">Agent Leaderboard</h1>
+  <p class="page-subtitle">Cumulative profit and loss across all settled bets. Budget resets to $1,000 per match.</p>
+</div>
+
 <table class="dashboard-table">
-    <thead>
-        <tr>
-            <th>Agent</th>
-            <th>Balance</th>
-            <th>Bets</th>
-            <th>Wins</th>
-            <th>Losses</th>
-            <th>Win Rate</th>
-            <th>Best Streak</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for agent in agents %}
-        <tr>
-            <td><a href="/agent/{{ agent.name }}" style="color: #C9D1D9; text-decoration: none;">{{ agent.name }}</a></td>
-            <td class="{% if agent.balance >= 0 %}profit{% else %}loss{% endif %}">
-                ${{ "%.2f"|format(agent.balance) }}
-            </td>
-            <td>{{ agent.total_bets }}</td>
-            <td class="profit">{{ agent.wins }}</td>
-            <td class="loss">{{ agent.losses }}</td>
-            <td>
-                {% if agent.total_bets > 0 %}
-                    {{ agent.win_rate }}%
-                {% else %}
-                    N/A
-                {% endif %}
-            </td>
-            <td>
-                {{ agent.best_streak }}x
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Agent</th>
+      <th>Balance</th>
+      <th>Bets</th>
+      <th>Wins</th>
+      <th>Losses</th>
+      <th>Win Rate</th>
+      <th>Best Streak</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for agent in agents %}
+    <tr>
+      <td style="color:var(--muted);font-family:var(--mono);font-size:.78rem;">{{ loop.index }}</td>
+      <td>
+        <a href="/agent/{{ agent.name }}" class="agent-name-link">{{ agent.name }}</a>
+      </td>
+      <td class="balance-value {% if agent.balance >= 0 %}profit{% else %}loss{% endif %}">
+        ${{ "%.2f"|format(agent.balance) }}
+      </td>
+      <td style="font-family:var(--mono);font-size:.82rem;color:var(--muted);">{{ agent.total_bets }}</td>
+      <td class="profit" style="font-family:var(--mono);font-size:.82rem;">{{ agent.wins }}</td>
+      <td class="loss"   style="font-family:var(--mono);font-size:.82rem;">{{ agent.losses }}</td>
+      <td style="font-family:var(--mono);font-size:.82rem;">
+        {% if agent.total_bets > 0 %}{{ agent.win_rate }}%{% else %}—{% endif %}
+      </td>
+      <td><span class="streak-badge">{{ agent.best_streak }}x</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
 {% endblock %}

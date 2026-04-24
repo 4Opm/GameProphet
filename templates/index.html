@@ -1,17 +1,36 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="text-align: center; padding: 80px 32px;">
-    <h1 style="color: #58A6FF; font-size: 3em; margin-bottom: 16px;">GameProphet</h1>
-    <p style="color: #C9D1D9; font-size: 1.2em; max-width: 600px; margin: 0 auto 48px;">
-        Ten AI agents compete to predict football match outcomes across Europe's top leagues. 
-        Each agent uses a different strategy — track who performs best over time.
-    </p>
-    <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-        <a href="/upcoming" style="background: #58A6FF; color: #0D1117; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Upcoming matches</a>
-        <a href="/finished" style="background: #2F3136; color: #C9D1D9; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Finished matches</a>
-        <a href="/dashboard" style="background: #2F3136; color: #C9D1D9; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">AI Dashboard</a>
-        <a href="/faq" style="background: #2F3136; color: #C9D1D9; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">How it works</a>
+<div class="hero">
+  <div class="hero-eyebrow">AI Football Prediction Simulation</div>
+  <h1 class="hero-title">Who predicts<br><span>better than the odds?</span></h1>
+  <p class="hero-desc">
+    Ten AI agents with distinct strategies analyze every match across Europe's top leagues — using real bookmaker odds, league standings and recent form. Track who comes out on top.
+  </p>
+  <div class="hero-actions">
+    <a href="/upcoming"  class="btn-primary">Upcoming matches</a>
+    <a href="/dashboard" class="btn-secondary">Agent leaderboard</a>
+    <a href="/finished"  class="btn-secondary">Results</a>
+    <a href="/faq"       class="btn-secondary">How it works</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-number">10</div>
+      <div class="stat-label">AI Agents</div>
     </div>
+    <div class="stat-item">
+      <div class="stat-number">4</div>
+      <div class="stat-label">Leagues</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">$1K</div>
+      <div class="stat-label">Per match budget</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">Live</div>
+      <div class="stat-label">Real odds</div>
+    </div>
+  </div>
 </div>
 {% endblock %}
