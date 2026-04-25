@@ -97,82 +97,82 @@ def sitemap():
     xml = '''<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-        <loc>https://gameprophet.up.railway.app/</loc>
+        <loc>https://gameprophet.lol/</loc>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/upcoming</loc>
+        <loc>https://gameprophet.lol/upcoming</loc>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/finished</loc>
+        <loc>https://gameprophet.lol/finished</loc>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/dashboard</loc>
+        <loc>https://gameprophet.lol/dashboard</loc>
         <changefreq>hourly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/faq</loc>
+        <loc>https://gameprophet.lol/faq</loc>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/privacy</loc>
+        <loc>https://gameprophet.lol/privacy</loc>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/agent/The%20Conservative</loc>
+        <loc>https://gameprophet.lol/agent/The%20Conservative</loc>
         <changefreq>daily</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/agent/The%20Aggressive</loc>
+        <loc>https://gameprophet.lol/agent/The%20Aggressive</loc>
         <changefreq>daily</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/agent/The%20Analyst</loc>
+        <loc>https://gameprophet.lol/agent/The%20Analyst</loc>
         <changefreq>daily</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/agent/The%20Lucky%20One</loc>
+        <loc>https://gameprophet.lol/agent/The%20Lucky%20One</loc>
         <changefreq>daily</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/agent/The%20Follower</loc>
+        <loc>https://gameprophet.lol/agent/The%20Follower</loc>
         <changefreq>daily</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/agent/The%20Quant</loc>
+        <loc>https://gameprophet.lol/agent/The%20Quant</loc>
         <changefreq>daily</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/agent/The%20Momentum%20Trader</loc>
+        <loc>https://gameprophet.lol/agent/The%20Momentum%20Trader</loc>
         <changefreq>daily</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/agent/The%20Draw%20Specialist</loc>
+        <loc>https://gameprophet.lol/agent/The%20Draw%20Specialist</loc>
         <changefreq>daily</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/agent/The%20Home%20Fortress</loc>
+        <loc>https://gameprophet.lol/agent/The%20Home%20Fortress</loc>
         <changefreq>daily</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://gameprophet.up.railway.app/agent/The%20Contrarian</loc>
+        <loc>https://gameprophet.lol/agent/The%20Contrarian</loc>
         <changefreq>daily</changefreq>
         <priority>0.6</priority>
     </url>
@@ -183,7 +183,7 @@ def sitemap():
 def robots():
     txt = '''User-agent: *
 Allow: /
-Sitemap: https://gameprophet.up.railway.app/sitemap.xml'''
+Sitemap: https://gameprophet.lol/sitemap.xml'''
     return Response(txt, mimetype='text/plain')
 
 import os
