@@ -1046,10 +1046,36 @@ a:visited { color: var(--accent); }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
-  nav { padding: 0 16px; }
-  .nav-right { gap: 2px; }
-  .nav-link { padding: 5px 8px; font-size: .75rem; }
+  nav {
+    padding: 0 12px;
+    height: auto;
+    min-height: 60px;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+  }
 
+  .nav-left {
+    gap: 10px;
+  }
+
+  .nav-right {
+    gap: 2px;
+    flex-wrap: wrap;
+  }
+
+  .nav-coffee {
+    display: none;
+  }
+
+  .nav-link {
+    padding: 4px 8px;
+    font-size: .72rem;
+  }
+
+  .nav-logo {
+    font-size: .95rem;
+  }
   .matches-grid {
     grid-template-columns: 1fr;
     padding: 12px 16px 24px;
