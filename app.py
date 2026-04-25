@@ -1,6 +1,6 @@
 from flask import Flask, render_template
 from flask_caching import Cache
-from database import get_upcoming_matches, get_finished_matches, get_agents, get_bets_for_match, get_match_by_id, get_agent_bets
+from database import get_upcoming_matches, get_finished_matches, get_agents, get_bets_for_match, get_match_by_id, get_agent_bets, get_stats
 
 from database import init_db, init_agents
 from ai_agents import AGENTS
@@ -40,7 +40,8 @@ thread.start()
 
 @app.route('/')
 def index():
-    return render_template('index.html', active_page='home')
+    stats = get_stats()
+    return render_template('index.html', active_page='home', stats=stats)
 
 @app.route('/upcoming')
 @cache.cached(timeout=300)

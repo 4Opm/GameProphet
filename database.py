@@ -310,6 +310,18 @@ def get_team_stats(team_name):
             "matches_analyzed": len(goals_scored)
         }
 
+def get_stats():
+    with get_db() as conn:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("""
+            SELECT 
+                COUNT(*) FILTER (WHERE skipped = FALSE) as total_bets,
+                COUNT(*) FILTER (WHERE result = 'WIN') as total_wins,
+                COUNT(*) FILTER (WHERE result = 'LOSS') as total_losses,
+                COUNT(DISTINCT match_id) as total_matches
+            FROM bets
+        """)
+        return dict(cursor.fetchone())
 
 if __name__ == "__main__":
     from ai_agents import AGENTS
