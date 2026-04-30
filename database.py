@@ -157,14 +157,6 @@ def resolve_bet(bet_id, result, profit_loss, agent_name):
             SET result = %s, profit_loss = %s
             WHERE bet_id = %s
         """, (result, profit_loss, bet_id))
-        cursor.execute("""
-            UPDATE agents
-            SET balance = balance + %s,
-                total_bets = total_bets + 1,
-                wins = wins + %s,
-                losses = losses + %s
-            WHERE name = %s
-        """, (profit_loss, 1 if result == 'WIN' else 0, 1 if result == 'LOSS' else 0, agent_name))
 
 def get_match_by_api_id(api_id):
     with get_db() as conn:
