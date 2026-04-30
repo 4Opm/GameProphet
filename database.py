@@ -177,42 +177,51 @@ def get_agents():
     with get_db() as conn:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("""
-            SELECT *,
-            ROUND((CAST(wins AS FLOAT) / NULLIF(CAST(total_bets AS FLOAT), 0) * 100)::numeric, 1) as win_rate
+            SELECT 
+                agents.name,
+                agents.description,
+                COUNT(bets.bet_id) FILTER (WHERE bets.skipped = FALSE AND bets.result IS NOT NULL) as total_bets,
+                COUNT(bets.bet_id) FILTER (WHERE bets.result = 'WIN') as wins,
+                COUNT(bets.bet_id) FILTER (WHERE bets.result = 'LOSS') as losses,
+                COALESCE(SUM(bets.profit_loss) FILTER (WHERE bets.profit_loss IS NOT NULL), 0) as balance,
+                ROUND((COUNT(bets.bet_id) FILTER (WHERE bets.result = 'WIN')::float / 
+                    NULLIF(COUNT(bets.bet_id) FILTER (WHERE bets.result IS NOT NULL AND bets.skipped = FALSE), 0) * 100)::numeric, 1) as win_rate
             FROM agents
+            LEFT JOIN bets ON bets.agent_name = agents.name
+            GROUP BY agents.name, agents.description
             ORDER BY balance DESC
         """)
-        agents = cursor.fetchall()
-        
         result = []
-        for row in agents:
+        for row in cursor.fetchall():
             r = dict(row)
-            r['win_rate'] = float(r['win_rate']) if r['win_rate'] is not None else 0.0
-            
-            # Pobierz best streak w tym samym połączeniu
-            cursor.execute("""
-                SELECT result FROM bets
-                WHERE agent_name = %s
-                AND result IS NOT NULL
-                AND skipped = FALSE
-                ORDER BY created_at ASC
-            """, (r['name'],))
-            
-            bets = cursor.fetchall()
-            best_streak = 0
-            current_streak = 0
-            
-            for bet in bets:
-                if bet['result'] == 'WIN':
-                    current_streak += 1
-                    best_streak = max(best_streak, current_streak)
-                else:
-                    current_streak = 0
-            
-            r['best_streak'] = best_streak
+            r['win_rate'] = float(r['win_rate']) if r['win_rate'] else 0.0
+            r['best_streak'] = get_agent_best_streak(r['name'])
             result.append(r)
-        
         return result
+
+def get_agent_best_streak(agent_name):
+    with get_db() as conn:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("""
+            SELECT result FROM bets
+            WHERE agent_name = %s
+            AND result IS NOT NULL
+            AND skipped = FALSE
+            ORDER BY created_at ASC
+        """, (agent_name,))
+        
+        bets = cursor.fetchall()
+        best_streak = 0
+        current_streak = 0
+        
+        for bet in bets:
+            if bet['result'] == 'WIN':
+                current_streak += 1
+                best_streak = max(best_streak, current_streak)
+            else:
+                current_streak = 0
+        
+        return best_streak
 
 def get_bets_for_match(match_id):
     with get_db() as conn:
