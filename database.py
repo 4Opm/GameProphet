@@ -107,8 +107,8 @@ def init_agents(agents):
         cursor = conn.cursor()
         for agent in agents:
             cursor.execute("""
-                INSERT INTO agents (name, description, balance)
-                VALUES (%s, %s, 0)
+                INSERT INTO agents (name, description)
+                VALUES (%s, %s)
                 ON CONFLICT (name) DO NOTHING
             """, (agent["name"], agent["description"]))
 
