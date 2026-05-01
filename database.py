@@ -183,12 +183,42 @@ def get_agents():
             GROUP BY agents.name, agents.description
             ORDER BY balance DESC
         """)
+        
+        agents_data = cursor.fetchall()
+        
+        # Pobierz wszystkie bety potrzebne do streaka w jednym zapytaniu
+        cursor.execute("""
+            SELECT agent_name, result
+            FROM bets
+            WHERE result IS NOT NULL AND skipped = FALSE
+            ORDER BY agent_name, created_at ASC
+        """)
+        
+        all_bets = cursor.fetchall()
+        
+        # Grupuj bety per agent i licz streak w Pythonie
+        from collections import defaultdict
+        bets_by_agent = defaultdict(list)
+        for bet in all_bets:
+            bets_by_agent[bet['agent_name']].append(bet['result'])
+        
+        def calc_streak(results):
+            best = current = 0
+            for r in results:
+                if r == 'WIN':
+                    current += 1
+                    best = max(best, current)
+                else:
+                    current = 0
+            return best
+        
         result = []
-        for row in cursor.fetchall():
+        for row in agents_data:
             r = dict(row)
             r['win_rate'] = float(r['win_rate']) if r['win_rate'] else 0.0
-            r['best_streak'] = get_agent_best_streak(r['name'])
+            r['best_streak'] = calc_streak(bets_by_agent[r['name']])
             result.append(r)
+        
         return result
 
 def get_agent_best_streak(agent_name):
