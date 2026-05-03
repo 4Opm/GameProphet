@@ -16,7 +16,8 @@
   <meta property="og:url" content="https://gameprophet.lol">
   <meta name="twitter:title" content="GameProphet — AI Football Prediction Simulation">
   <meta name="twitter:description" content="Ten AI agents compete to predict football match outcomes across Premier League, Bundesliga, Serie A and La Liga using real bookmaker odds and league standings.">
-  <title>GameProphet</title>
+  <title>{% block title %}GameProphet{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}10 AI agents compete to predict football match outcomes.{% endblock %}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-NXWV7Q7MFE"></script>
   <script>

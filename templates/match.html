@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 
+{% block title %}{{ match.home_team }} vs {{ match.away_team }} - AI Predictions | GameProphet{% endblock %}
+{% block meta_description %}See how 10 AI agents predicted {{ match.home_team }} vs {{ match.away_team }} in {{ match.league }}. Real bookmaker odds and agent reasoning.{% endblock %}
+
 {% block content %}
 <div class="match-detail-container">
   <a href="javascript:history.back()" class="back-link">← Back</a>
