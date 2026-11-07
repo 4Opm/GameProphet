@@ -5,16 +5,17 @@
 
 {% block content %}
 <div class="filters-container">
-  <select id="league-filter" class="league-select" onchange="filterMatches()">
+  <select id="league-filter" class="league-select" onchange="applyFilters()">
     <option value="all">All leagues</option>
     {% for code, league in leagues.items() %}
     <option value="{{ code }}">{{ league.name }}</option>
     {% endfor %}
   </select>
-  <input id="search-input" type="text" class="search-input" placeholder="Search team..." oninput="searchMatches()">
+  <input id="search-input" type="text" class="search-input" placeholder="Search team..." oninput="applyFilters()">
 </div>
 
 <div class="matches-grid">
+  {% if not matches %}<p class="no-predictions">No matches to show right now.</p>{% endif %}
   {% for match in matches %}
   <a href="/match/{{ match.match_id }}" style="text-decoration:none;color:inherit;">
     <div class="match-card" data-league="{{ match.league }}">

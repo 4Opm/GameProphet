@@ -16,11 +16,11 @@
 
   <div class="hero-stats">
     <div class="stat-item">
-      <div class="stat-number">10</div>
+      <div class="stat-number">{{ agent_count }}</div>
       <div class="stat-label">AI Agents</div>
     </div>
     <div class="stat-item">
-      <div class="stat-number">4</div>
+      <div class="stat-number">{{ league_count }}</div>
       <div class="stat-label">Leagues</div>
     </div>
     <div class="stat-item">
@@ -36,7 +36,7 @@
     <p style="font-size: .85rem; color: var(--muted); line-height: 1.7; margin-bottom: 12px;">
       GameProphet is free and always will be. If you enjoy it, consider buying me a coffee to keep the servers running.
     </p>
-    <a href="https://buymeacoffee.com/GameProphet" target="_blank" class="btn-primary">Buy me a coffee</a>
+    <a href="https://buymeacoffee.com/GameProphet" target="_blank" rel="noopener" class="btn-primary">Buy me a coffee</a>
 </div>
 </div>
 {% endblock %}

@@ -1,66 +1,91 @@
-from fetcher import fetch_matches
-from database import save_match, get_match_by_api_id
+import threading
+from datetime import datetime, timedelta, timezone
 from time import sleep
-from datetime import datetime, timedelta
-from config import LEAGUES
-
-
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from ai_agents import place_bets_for_match, settle_bets
-
+from config import LEAGUES
+from database import get_bettable_matches, save_matches
+from fetcher import fetch_matches
 from odds_fetcher import update_all_odds
 
-from datetime import datetime
+DAYS_BACK = 40
+DAYS_AHEAD = 7
+API_PAUSE_SECONDS = 6  # football-data.org free tier: 10 requests / minute
 
-last_odds_update = None
+_last_odds_update = None
+_run_lock = threading.Lock()
+
 
 def update_matches():
-    global last_odds_update
+    """Fetch fixtures/results, refresh odds once a day, place new bets and settle finished ones."""
+    global _last_odds_update
 
-    today = datetime.now().date()
-    lastWeek = today - timedelta(days=40)
-    nextWeek = today + timedelta(days=7)
+    if not _run_lock.acquire(blocking=False):
+        print("Previous update still running, skipping this run")
+        return
 
-    for i in LEAGUES:
-        results = fetch_matches(i, lastWeek.isoformat(), nextWeek.isoformat())
-        if not results:
-            print(f"No results for {i}, skipping")
-            continue
-        for j in results["matches"]:
-            save_match(j, i)
-        sleep(6)
-    
-    today = datetime.now().date()
-    if last_odds_update != today:
-        update_all_odds()
-        last_odds_update = today
-    
-    for i in LEAGUES:
-        results = fetch_matches(i, lastWeek.isoformat(), nextWeek.isoformat())
-        for j in results["matches"]:
-            if j["status"] in ["TIMED", "SCHEDULED"]:
-                match = get_match_by_api_id(j["id"])
-                if match:
-                    place_bets_for_match(match)
-        sleep(6)
-    
-    settle_bets()
-    
+    try:
+        today = datetime.now(timezone.utc).date()
+        date_from = (today - timedelta(days=DAYS_BACK)).isoformat()
+        date_to = (today + timedelta(days=DAYS_AHEAD)).isoformat()
+
+        for league_code in LEAGUES:
+            results = fetch_matches(league_code, date_from, date_to)
+            if not results or "matches" not in results:
+                print(f"No results for {league_code}, skipping")
+            else:
+                save_matches(results["matches"], league_code)
+                print(f"{league_code}: saved {len(results['matches'])} matches")
+            sleep(API_PAUSE_SECONDS)
+
+        # Settle first so the leaderboard is up to date even if betting fails later.
+        settle_bets()
+
+        if _last_odds_update != today:
+            update_all_odds()
+            _last_odds_update = today
+
+        for match in get_bettable_matches():
+            try:
+                place_bets_for_match(match)
+            except Exception as e:
+                print(f"Betting failed for match {match['match_id']}: {e}")
+    finally:
+        _run_lock.release()
+
+
+def safe_update_matches():
+    try:
+        update_matches()
+    except Exception as e:
+        print(f"Scheduler error: {e}")
+
+
+def start_scheduler():
+    """Run one update now (in the background) and then every hour."""
+    scheduler = BackgroundScheduler(daemon=True)
+    scheduler.add_job(
+        safe_update_matches,
+        "interval",
+        hours=1,
+        next_run_time=datetime.now(),
+        max_instances=1,
+        coalesce=True,
+    )
+    scheduler.start()
+    return scheduler
+
+
 if __name__ == "__main__":
-    from database import init_db, init_agents
     from ai_agents import AGENTS
-    
+    from database import init_agents, init_db
+
     init_db()
     init_agents(AGENTS)
-    
-    update_matches()
-    
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(update_matches, "interval", hours=1)
-    scheduler.start()
-    
+
+    scheduler = start_scheduler()
     try:
         while True:
             sleep(60)

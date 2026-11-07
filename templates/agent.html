@@ -28,7 +28,7 @@
     {% for bet in bets %}
     <tr>
       <td>
-        <a href="/match/{{ bet.match_id }}" style="color:var(--text);font-weight:500;font-size:.85rem;">
+        <a href="{{ url_for('match_detail', match_id=bet.match_id) }}" style="color:var(--text);font-weight:500;font-size:.85rem;">
           {{ bet.home_team }} vs {{ bet.away_team }}
         </a>
       </td>
@@ -47,7 +47,7 @@
         {{ bet.result if bet.result else 'Pending' }}
       </td>
       <td class="{% if bet.profit_loss and bet.profit_loss > 0 %}profit{% elif bet.profit_loss and bet.profit_loss < 0 %}loss{% endif %}" style="font-family:var(--mono);font-size:.78rem;">
-        {% if bet.profit_loss %}${{ "%.0f"|format(bet.profit_loss) }}{% else %}—{% endif %}
+        {% if bet.profit_loss is not none %}${{ "%.0f"|format(bet.profit_loss) }}{% else %}—{% endif %}
       </td>
     </tr>
     {% endfor %}

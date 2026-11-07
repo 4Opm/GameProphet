@@ -1,12 +1,22 @@
-function filterMatches() {
-    const val = document.getElementById('league-filter').value;
+function applyFilters() {
+    const leagueEl = document.getElementById('league-filter');
+    const searchEl = document.getElementById('search-input');
+    const league = leagueEl ? leagueEl.value : 'all';
+    const query = searchEl ? searchEl.value.trim().toLowerCase() : '';
+
     document.querySelectorAll('.match-card').forEach(card => {
-        const link = card.closest('a');
-        if (link) {
-            link.style.display = val === 'all' || card.dataset.league === val ? '' : 'none';
-        }
+        const link = card.closest('a') || card;
+        const teamsEl = card.querySelector('.teams');
+        const teams = teamsEl ? teamsEl.textContent.toLowerCase() : '';
+        const leagueOk = league === 'all' || card.dataset.league === league;
+        const searchOk = !query || teams.includes(query);
+        link.style.display = leagueOk && searchOk ? '' : 'none';
     });
 }
+
+// Kept for backwards compatibility with old markup.
+const filterMatches = applyFilters;
+const searchMatches = applyFilters;
 
 function convertDatesToLocal() {
     document.querySelectorAll('[data-utc]').forEach(el => {
@@ -79,20 +89,24 @@ function closeShareModal() {
 
 function copyShareLink() {
     const input = document.getElementById('share-link-input');
-    navigator.clipboard.writeText(input.value).then(() => {
-        const btn = document.querySelector('.share-copy-btn');
+    const btn = document.querySelector('.share-copy-btn');
+    const done = () => {
         btn.textContent = 'Copied!';
         setTimeout(() => btn.textContent = 'Copy', 2000);
-    });
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(input.value).then(done).catch(() => {
+            input.select();
+            document.execCommand('copy');
+            done();
+        });
+    } else {
+        input.select();
+        document.execCommand('copy');
+        done();
+    }
 }
 
-function searchMatches() {
-    const query = document.getElementById('search-input').value.toLowerCase();
-    document.querySelectorAll('.match-card').forEach(card => {
-        const teams = card.querySelector('.teams').textContent.toLowerCase();
-        const link = card.closest('a');
-        if (link) {
-            link.style.display = teams.includes(query) ? '' : 'none';
-        }
-    });
-}
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeShareModal();
+});

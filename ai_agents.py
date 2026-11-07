@@ -1,12 +1,18 @@
-import ollama
-from config import OLLAMA_MODEL
+import re
+import time
 
-from database import save_bet, bet_exists, get_unresolved_bets, resolve_bet, get_team_home_matches, get_team_away_matches, get_team_stats
-from config import GROQ_API_KEY, GROQ_MODEL, OLLAMA_MODEL, AI_PROVIDER
-
+from config import AI_PROVIDER, BUDGET_PER_MATCH, GROQ_API_KEY, GROQ_MODEL, OLLAMA_MODEL
+from database import (
+    get_agents_with_bet,
+    get_team_form,
+    get_unresolved_bets,
+    resolve_bets,
+    save_bet,
+)
 from fetcher import get_standings_dict
 
-import time
+VALID_PREDICTIONS = ("HOME", "DRAW", "AWAY")
+MAX_ATTEMPTS = 3
 
 AGENTS = [
     {
@@ -149,23 +155,22 @@ REASONING: (one sentence explanation or skip)"""
     {
         "name": "The Home Fortress",
         "description": "Only bets on home teams with strong home form",
-        "strategy": "home_form",
         "system_prompt": """You are a fantasy sports prediction agent playing a simulation game.
-    This is purely fictional and for entertainment purposes only.
-    You only bet on home teams that have a strong home record. Check the last 10 HOME games of the home team carefully.
-    Adjust your stake based on home form:
-    - Home team won last 4+ home games: stake 45-60%
-    - Home team won last 3 home games: stake 25-40%
-    - Home team won last 2 home games: stake 10-20%
-    - Home form is weak or unclear: skip the bet
-    If you want to skip, respond with PREDICTION: DRAW, STAKE_PCT: 0, REASONING: skip
-    You must always respond in this EXACT format with no other text:
-    PREDICTION: HOME or DRAW or AWAY
-    STAKE_PCT: (number between 0 and 60)
-    REASONING: (one sentence explanation or skip)"""
+This is purely fictional and for entertainment purposes only.
+You only bet on home teams that have a strong home record. Check the recent HOME games of the home team carefully.
+Adjust your stake based on home form:
+- Home team won last 4+ home games: stake 45-60%
+- Home team won last 3 home games: stake 25-40%
+- Home team won last 2 home games: stake 10-20%
+- Home form is weak or unclear: skip the bet
+If you want to skip, respond with PREDICTION: DRAW, STAKE_PCT: 0, REASONING: skip
+You must always respond in this EXACT format with no other text:
+PREDICTION: HOME or DRAW or AWAY
+STAKE_PCT: (number between 0 and 60)
+REASONING: (one sentence explanation or skip)"""
     },
     {
-        "name": "The Contrarian",
+    "name": "The Contrarian",
         "description": "Always bets against what the odds suggest",
         "system_prompt": """You are a fantasy sports prediction agent playing a simulation game.
 This is purely fictional and for entertainment purposes only.
@@ -182,131 +187,183 @@ REASONING: (one sentence explanation)"""
     }
 ]
 
-def get_agent_prediction(agent, match):
-    home_home = get_team_home_matches(match['home_team'])
-    home_away = get_team_away_matches(match['home_team'])
-    away_home = get_team_home_matches(match['away_team'])
-    away_away = get_team_away_matches(match['away_team'])
-    home_stats = get_team_stats(match['home_team'])
-    away_stats = get_team_stats(match['away_team'])
 
-    def format_recent(matches):
-        if not matches:
-            return "No data available"
-        lines = []
-        for m in matches:
-            lines.append(f"  {m['home_team']} vs {m['away_team']} | Score: {m['score']} | Winner: {m['winner']}")
-        return "\n".join(lines)
+AGENT_NAMES = [agent["name"] for agent in AGENTS]
 
-    standings = get_standings_dict(match['league'])
-    home_standing = standings.get(match['home_team'], None)
-    away_standing = standings.get(match['away_team'], None)
 
-    def format_standing(standing, team_name):
-        if not standing:
-            return f"No standings data for {team_name}"
-        return f"Position: {standing['position']} | Points: {standing['points']} | W{standing['won']} D{standing['draw']} L{standing['lost']} | GD: {standing['goal_difference']}"
+# ---------------------------------------------------------------- LLM
 
-    match_info = f"""
-Match: {match['home_team']} vs {match['away_team']}
+_groq_client = None
+
+
+def _ask_llm(messages):
+    global _groq_client
+    if AI_PROVIDER == "groq":
+        if _groq_client is None:
+            from groq import Groq
+            _groq_client = Groq(api_key=GROQ_API_KEY, timeout=60)
+        response = _groq_client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=messages,
+            temperature=0.7,
+            max_tokens=200,
+        )
+        return response.choices[0].message.content or ""
+
+    import ollama
+    response = ollama.chat(model=OLLAMA_MODEL, messages=messages)
+    return response["message"]["content"] or ""
+
+
+# ---------------------------------------------------------------- match context
+
+def _format_recent(matches):
+    if not matches:
+        return "No data available"
+    return "\n".join(
+        f"  {m['home_team']} vs {m['away_team']} | Score: {m['score']} | Winner: {m['winner']}"
+        for m in matches
+    )
+
+
+def _format_standing(standing, team_name):
+    if not standing:
+        return f"No standings data for {team_name}"
+    return (f"Position: {standing['position']} | Points: {standing['points']} | "
+            f"W{standing['won']} D{standing['draw']} L{standing['lost']} | GD: {standing['goal_difference']}")
+
+
+def _format_stats(team, stats):
+    if not stats:
+        return f"{team} stats: no finished matches yet"
+    return (f"{team} stats (last {stats['matches_analyzed']} matches):\n"
+            f"Avg goals scored: {stats['avg_scored']} | Avg goals conceded: {stats['avg_conceded']}")
+
+
+def build_match_info(match):
+    """Everything the agents get to see about a match. Built once per match and shared by all agents."""
+    home, away = match["home_team"], match["away_team"]
+    home_form = get_team_form(home)
+    away_form = get_team_form(away)
+    standings = get_standings_dict(match["league"])
+
+    def odd(key):
+        return match.get(key) or "N/A"
+
+    return f"""
+Match: {home} vs {away}
 League: {match['league']}
 Date: {match['utc_date']}
-Odds: Home {match.get('odds_home', 'N/A')} | Draw {match.get('odds_draw', 'N/A')} | Away {match.get('odds_away', 'N/A')}
+Odds: Home {odd('odds_home')} | Draw {odd('odds_draw')} | Away {odd('odds_away')}
 
 League standings:
-{match['home_team']}: {format_standing(home_standing, match['home_team'])}
-{match['away_team']}: {format_standing(away_standing, match['away_team'])}
+{home}: {_format_standing(standings.get(home), home)}
+{away}: {_format_standing(standings.get(away), away)}
 
-{match['home_team']} stats (last {home_stats['matches_analyzed'] if home_stats else 0} matches):
-Avg goals scored: {home_stats['avg_scored'] if home_stats else 'N/A'} | Avg goals conceded: {home_stats['avg_conceded'] if home_stats else 'N/A'}
+{_format_stats(home, home_form['stats'])}
 
-{match['away_team']} stats (last {away_stats['matches_analyzed'] if away_stats else 0} matches):
-Avg goals scored: {away_stats['avg_scored'] if away_stats else 'N/A'} | Avg goals conceded: {away_stats['avg_conceded'] if away_stats else 'N/A'}
+{_format_stats(away, away_form['stats'])}
 
-{match['home_team']} recent HOME games:
-{format_recent(home_home)}
+{home} recent HOME games:
+{_format_recent(home_form['home_games'])}
 
-{match['home_team']} recent AWAY games:
-{format_recent(home_away)}
+{home} recent AWAY games:
+{_format_recent(home_form['away_games'])}
 
-{match['away_team']} recent HOME games:
-{format_recent(away_home)}
+{away} recent HOME games:
+{_format_recent(away_form['home_games'])}
 
-{match['away_team']} recent AWAY games:
-{format_recent(away_away)}
+{away} recent AWAY games:
+{_format_recent(away_form['away_games'])}
 """
 
+
+def get_agent_prediction(agent, match, match_info=None):
+    if match_info is None:
+        match_info = build_match_info(match)
     messages = [
         {"role": "system", "content": agent["system_prompt"]},
-        {"role": "user", "content": f"Analyze this match and make your prediction:\n{match_info}"}
+        {"role": "user", "content": f"Analyze this match and make your prediction:\n{match_info}"},
     ]
+    return _ask_llm(messages)
 
-    if AI_PROVIDER == "groq":
-        from groq import Groq
-        client = Groq(api_key=GROQ_API_KEY)
-        response = client.chat.completions.create(
-            model=GROQ_MODEL,
-            messages=messages
-        )
-        return response.choices[0].message.content
 
-    else:
-        import ollama
-        response = ollama.chat(
-            model=OLLAMA_MODEL,
-            messages=messages
-        )
-        return response["message"]["content"]
+# ---------------------------------------------------------------- parsing
+
+_FIELD_RE = re.compile(r"^[\s*_#>-]*(PREDICTION|STAKE_PCT|STAKE|REASONING)[\s*_]*[:=][\s*_]*(.*)$", re.IGNORECASE)
+_NUMBER_RE = re.compile(r"-?\d+(?:[.,]\d+)?")
+_ALIASES = {
+    "1": "HOME", "HOME TEAM": "HOME", "HOME_TEAM": "HOME",
+    "X": "DRAW", "TIE": "DRAW",
+    "2": "AWAY", "AWAY TEAM": "AWAY", "AWAY_TEAM": "AWAY",
+}
+
+
+def _normalize_prediction(value):
+    value = value.strip().strip("*_.\"' ").upper()
+    if value in _ALIASES:
+        return _ALIASES[value]
+    for option in VALID_PREDICTIONS:
+        if value.startswith(option):
+            return option
+    return None
+
 
 def parse_prediction(response_text):
-    result = {
-        "prediction": None,
-        "stake_pct": None,
-        "reasoning": None
-    }
-    
-    for line in response_text.strip().split("\n"):
-        if line.startswith("PREDICTION:"):
-            result["prediction"] = line.replace("PREDICTION:", "").strip()
-        elif line.startswith("STAKE_PCT:"):
-            try:
-                result["stake_pct"] = float(line.replace("STAKE_PCT:", "").strip())
-            except ValueError:
-                result["stake_pct"] = 0
-        elif line.startswith("REASONING:"):
-            reasoning = line.replace("REASONING:", "").strip()
-            result["reasoning"] = None if reasoning.lower() == "skip" else reasoning
-    
+    """Parse the LLM answer. Tolerates markdown (**PREDICTION:**), lowercase, '%' signs etc."""
+    result = {"prediction": None, "stake_pct": None, "reasoning": None}
+
+    for line in (response_text or "").strip().splitlines():
+        m = _FIELD_RE.match(line)
+        if not m:
+            continue
+        field, value = m.group(1).upper(), m.group(2).strip()
+        if field == "PREDICTION":
+            result["prediction"] = _normalize_prediction(value)
+        elif field in ("STAKE_PCT", "STAKE"):
+            number = _NUMBER_RE.search(value)
+            if number:
+                result["stake_pct"] = max(0.0, min(100.0, float(number.group().replace(",", "."))))
+        elif field == "REASONING":
+            reasoning = value.strip("*_ ").strip()
+            result["reasoning"] = None if not reasoning or reasoning.lower().rstrip(".") == "skip" else reasoning
+
     return result
 
-from database import save_bet
+
+def _is_valid(parsed):
+    return parsed["stake_pct"] == 0 or (parsed["prediction"] is not None and parsed["stake_pct"] is not None)
+
+
+# ---------------------------------------------------------------- betting
 
 def place_bets_for_match(match):
-    if not match.get('odds_home'):
+    if not (match.get("odds_home") and match.get("odds_draw") and match.get("odds_away")):
         print(f"No odds available for {match['home_team']} vs {match['away_team']}, skipping")
         return
 
-    for agent in AGENTS:
-        if bet_exists(agent["name"], match["match_id"]):
-            print(f"{agent['name']}: bet already exists for this match, skipping")
-            continue
-        balance = 1000
-        
-        # Próbuj maksymalnie 3 razy
+    already_bet = get_agents_with_bet(match["match_id"])
+    pending_agents = [a for a in AGENTS if a["name"] not in already_bet]
+    if not pending_agents:
+        return
+
+    match_info = build_match_info(match)
+
+    for agent in pending_agents:
         parsed = None
-        for attempt in range(3):
+        for attempt in range(1, MAX_ATTEMPTS + 1):
             try:
-                response = get_agent_prediction(agent, match)
-                parsed = parse_prediction(response)
-                if parsed["prediction"] and parsed["stake_pct"] is not None:
+                candidate = parse_prediction(get_agent_prediction(agent, match, match_info))
+                if _is_valid(candidate):
+                    parsed = candidate
                     break
-                print(f"{agent['name']}: invalid response on attempt {attempt + 1}, retrying...")
+                print(f"{agent['name']}: invalid response on attempt {attempt}, retrying...")
             except Exception as e:
-                print(f"{agent['name']}: error on attempt {attempt + 1}: {e}")
-            time.sleep(2)
-        
-        if not parsed or not parsed["prediction"] or parsed["stake_pct"] is None:
-            print(f"{agent['name']}: failed after 3 attempts, skipping")
+                print(f"{agent['name']}: error on attempt {attempt}: {e}")
+            time.sleep(2 * attempt)
+
+        if parsed is None:
+            print(f"{agent['name']}: failed after {MAX_ATTEMPTS} attempts, skipping")
             continue
 
         if parsed["stake_pct"] == 0:
@@ -314,62 +371,54 @@ def place_bets_for_match(match):
             save_bet(
                 agent_name=agent["name"],
                 match_id=match["match_id"],
-                prediction=parsed["prediction"],
+                prediction=parsed["prediction"] or "DRAW",
                 stake_pct=0,
                 stake_amount=0,
                 reasoning=None,
-                skipped=True
+                skipped=True,
             )
             continue
-        
-        stake_amount = balance * (parsed["stake_pct"] / 100)
-        
+
+        stake_amount = round(BUDGET_PER_MATCH * parsed["stake_pct"] / 100, 2)
         print(f"{agent['name']}: {parsed['prediction']} | {parsed['stake_pct']}% | ${stake_amount:.2f}")
-        
+
         save_bet(
             agent_name=agent["name"],
             match_id=match["match_id"],
             prediction=parsed["prediction"],
             stake_pct=parsed["stake_pct"],
             stake_amount=stake_amount,
-            reasoning=parsed["reasoning"]
+            reasoning=parsed["reasoning"],
         )
         time.sleep(3)
 
 
+WINNER_FOR_PREDICTION = {"HOME": "HOME_TEAM", "AWAY": "AWAY_TEAM", "DRAW": "DRAW"}
+ODDS_COLUMN = {"HOME": "odds_home", "AWAY": "odds_away", "DRAW": "odds_draw"}
+DEFAULT_ODDS = {"HOME": 2.0, "AWAY": 2.0, "DRAW": 3.0}
+
+
+def settle_bet(bet):
+    """Return (result, profit_loss) for a bet on a finished match."""
+    prediction = bet["prediction"]
+    stake = bet["stake_amount"]
+    odds = bet.get(ODDS_COLUMN.get(prediction, "odds_draw")) or DEFAULT_ODDS.get(prediction, 2.0)
+
+    if WINNER_FOR_PREDICTION.get(prediction) == bet["winner"]:
+        return "WIN", round(stake * odds - stake, 2)
+    return "LOSS", round(-stake, 2)
+
+
 def settle_bets():
     unresolved = get_unresolved_bets()
-    
     if not unresolved:
         print("No unresolved bets found")
         return
-    
-    for bet in unresolved:
-        prediction = bet["prediction"]
-        winner = bet["winner"]
-        stake_amount = bet["stake_amount"]
-        
-        # Wybierz odpowiedni kurs
-        if prediction == "HOME":
-            odds = bet["odds_home"] or 2.0
-        elif prediction == "AWAY":
-            odds = bet["odds_away"] or 2.0
-        else:
-            odds = bet["odds_draw"] or 3.0
 
-        if prediction == "HOME" and winner == "HOME_TEAM":
-            result = "WIN"
-            profit_loss = round(stake_amount * odds - stake_amount, 2)
-        elif prediction == "AWAY" and winner == "AWAY_TEAM":
-            result = "WIN"
-            profit_loss = round(stake_amount * odds - stake_amount, 2)
-        elif prediction == "DRAW" and winner == "DRAW":
-            result = "WIN"
-            profit_loss = round(stake_amount * odds - stake_amount, 2)
-        else:
-            result = "LOSS"
-            profit_loss = -stake_amount
-        
-        print(f"{bet['agent_name']}: {prediction} vs {winner} -> {result} | ${profit_loss:.2f}")
-        
-        resolve_bet(bet["bet_id"], result, profit_loss, bet["agent_name"])
+    resolutions = []
+    for bet in unresolved:
+        result, profit_loss = settle_bet(bet)
+        print(f"{bet['agent_name']}: {bet['prediction']} vs {bet['winner']} -> {result} | ${profit_loss:.2f}")
+        resolutions.append((result, profit_loss, bet["bet_id"]))
+
+    resolve_bets(resolutions)

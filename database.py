@@ -1,9 +1,36 @@
+from collections import defaultdict
+from contextlib import contextmanager
+
 import psycopg2
 import psycopg2.extras
+
 from config import DATABASE_URL
 
+UPCOMING_STATUSES = ("TIMED", "SCHEDULED", "IN_PLAY", "PAUSED")
+BETTABLE_STATUSES = ("TIMED", "SCHEDULED")
+
+
+@contextmanager
 def get_db():
-    return psycopg2.connect(DATABASE_URL)
+    """Open a connection, commit on success, roll back on error and ALWAYS close it.
+
+    (psycopg2's own `with conn:` only commits/rolls back — it never closes the
+    connection, which leaked one connection per query.)
+    """
+    conn = psycopg2.connect(DATABASE_URL, connect_timeout=10)
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def _dict_cursor(conn):
+    return conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
 
 def init_db():
     with get_db() as conn:
@@ -54,44 +81,177 @@ def init_db():
                 created_at TEXT DEFAULT (now()::text)
             )
         """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_matches_home ON matches(home_team)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_matches_away ON matches(away_team)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_bets_match ON bets(match_id)")
 
-def save_match(match, league_code):
+
+def init_agents(agents):
     with get_db() as conn:
         cursor = conn.cursor()
-        score = f'{match["score"]["fullTime"]["home"]}:{match["score"]["fullTime"]["away"]}' if match["score"]["fullTime"]["home"] is not None else None
-        cursor.execute("""
+        for agent in agents:
+            cursor.execute("""
+                INSERT INTO agents (name, description)
+                VALUES (%s, %s)
+                ON CONFLICT (name) DO UPDATE SET description = EXCLUDED.description
+            """, (agent["name"], agent["description"]))
+
+
+# ---------------------------------------------------------------- matches
+
+def save_matches(matches, league_code):
+    """Upsert a batch of matches from football-data.org in a single connection."""
+    if not matches:
+        return
+    rows = []
+    for match in matches:
+        full_time = (match.get("score") or {}).get("fullTime") or {}
+        home_goals, away_goals = full_time.get("home"), full_time.get("away")
+        score = f"{home_goals}:{away_goals}" if home_goals is not None and away_goals is not None else None
+        home, away = match["homeTeam"], match["awayTeam"]
+        rows.append((
+            league_code, match["id"], match["utcDate"],
+            home.get("shortName") or home.get("name"),
+            away.get("shortName") or away.get("name"),
+            (match.get("score") or {}).get("winner"), score, match["status"],
+            home.get("crest"), away.get("crest"),
+        ))
+
+    with get_db() as conn:
+        cursor = conn.cursor()
+        psycopg2.extras.execute_batch(cursor, """
             INSERT INTO matches (league, api_id, utc_date, home_team, away_team, winner, score, status, home_crest, away_crest)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (api_id) DO UPDATE SET
-                winner = EXCLUDED.winner,
-                score = EXCLUDED.score,
-                status = EXCLUDED.status
-        """, (
-            league_code, match["id"], match["utcDate"],
-            match["homeTeam"]["shortName"], match["awayTeam"]["shortName"],
-            match["score"]["winner"], score, match["status"],
-            match["homeTeam"]["crest"], match["awayTeam"]["crest"]
-))
+                utc_date   = EXCLUDED.utc_date,
+                winner     = EXCLUDED.winner,
+                score      = EXCLUDED.score,
+                status     = EXCLUDED.status,
+                home_crest = COALESCE(EXCLUDED.home_crest, matches.home_crest),
+                away_crest = COALESCE(EXCLUDED.away_crest, matches.away_crest)
+        """, rows)
+
+
+def save_match(match, league_code):
+    save_matches([match], league_code)
+
 
 def get_upcoming_matches():
     with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = _dict_cursor(conn)
         cursor.execute("""
             SELECT * FROM matches
-            WHERE status = 'TIMED' OR status = 'SCHEDULED' OR status = 'IN_PLAY'
+            WHERE status = ANY(%s)
             ORDER BY utc_date
-        """)
+        """, (list(UPCOMING_STATUSES),))
         return [dict(row) for row in cursor.fetchall()]
+
+
+def get_bettable_matches(date_to=None):
+    """Matches that have not started yet (optionally only up to `date_to`, ISO string)."""
+    with get_db() as conn:
+        cursor = _dict_cursor(conn)
+        if date_to:
+            cursor.execute("""
+                SELECT * FROM matches
+                WHERE status = ANY(%s) AND utc_date <= %s
+                ORDER BY utc_date
+            """, (list(BETTABLE_STATUSES), date_to))
+        else:
+            cursor.execute("""
+                SELECT * FROM matches
+                WHERE status = ANY(%s)
+                ORDER BY utc_date
+            """, (list(BETTABLE_STATUSES),))
+        return [dict(row) for row in cursor.fetchall()]
+
 
 def get_finished_matches():
     with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = _dict_cursor(conn)
         cursor.execute("""
             SELECT * FROM matches
             WHERE status = 'FINISHED'
             ORDER BY utc_date DESC
         """)
         return [dict(row) for row in cursor.fetchall()]
+
+
+def get_match_by_id(match_id):
+    with get_db() as conn:
+        cursor = _dict_cursor(conn)
+        cursor.execute("SELECT * FROM matches WHERE match_id = %s", (match_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+
+def get_match_by_api_id(api_id):
+    with get_db() as conn:
+        cursor = _dict_cursor(conn)
+        cursor.execute("SELECT * FROM matches WHERE api_id = %s", (api_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+
+def update_match_odds(updates):
+    """updates: iterable of (odds_home, odds_draw, odds_away, match_id)."""
+    updates = list(updates)
+    if not updates:
+        return
+    with get_db() as conn:
+        cursor = conn.cursor()
+        psycopg2.extras.execute_batch(cursor, """
+            UPDATE matches
+            SET odds_home = %s, odds_draw = %s, odds_away = %s
+            WHERE match_id = %s
+        """, updates)
+
+
+# ---------------------------------------------------------------- team form
+
+def get_team_form(team_name, limit=5):
+    """Recent home games, recent away games and goal averages for a team — one connection."""
+    with get_db() as conn:
+        cursor = _dict_cursor(conn)
+        cursor.execute("""
+            SELECT home_team, away_team, score, winner, utc_date
+            FROM matches
+            WHERE (home_team = %s OR away_team = %s)
+              AND status = 'FINISHED'
+              AND score IS NOT NULL
+            ORDER BY utc_date DESC
+        """, (team_name, team_name))
+        matches = [dict(row) for row in cursor.fetchall()]
+
+    home_games = [m for m in matches if m["home_team"] == team_name][:limit]
+    away_games = [m for m in matches if m["away_team"] == team_name][:limit]
+
+    scored, conceded = [], []
+    for m in matches:
+        try:
+            home_goals, away_goals = map(int, m["score"].split(":"))
+        except (ValueError, AttributeError):
+            continue
+        if m["home_team"] == team_name:
+            scored.append(home_goals)
+            conceded.append(away_goals)
+        else:
+            scored.append(away_goals)
+            conceded.append(home_goals)
+
+    stats = None
+    if scored:
+        stats = {
+            "avg_scored": round(sum(scored) / len(scored), 2),
+            "avg_conceded": round(sum(conceded) / len(conceded), 2),
+            "matches_analyzed": len(scored),
+        }
+
+    return {"home_games": home_games, "away_games": away_games, "stats": stats}
+
+
+# ---------------------------------------------------------------- bets
 
 def save_bet(agent_name, match_id, prediction, stake_pct, stake_amount, reasoning, skipped=False):
     with get_db() as conn:
@@ -101,196 +261,70 @@ def save_bet(agent_name, match_id, prediction, stake_pct, stake_amount, reasonin
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (agent_name, match_id) DO NOTHING
         """, (agent_name, match_id, prediction, stake_pct, stake_amount, reasoning, skipped))
-        
-def init_agents(agents):
+
+
+def get_agents_with_bet(match_id):
+    """Names of agents that already have a bet (or a skip) recorded for this match."""
     with get_db() as conn:
         cursor = conn.cursor()
-        for agent in agents:
-            cursor.execute("""
-                INSERT INTO agents (name, description)
-                VALUES (%s, %s)
-                ON CONFLICT (name) DO NOTHING
-            """, (agent["name"], agent["description"]))
+        cursor.execute("SELECT agent_name FROM bets WHERE match_id = %s", (match_id,))
+        return {row[0] for row in cursor.fetchall()}
 
-
-def get_team_recent_matches(team_name, limit=10):
-    with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("""
-            SELECT home_team, away_team, score, winner, utc_date
-            FROM matches
-            WHERE (home_team = %s OR away_team = %s)
-            AND status = 'FINISHED'
-            ORDER BY utc_date DESC
-            LIMIT %s
-        """, (team_name, team_name, limit))
-        return [dict(row) for row in cursor.fetchall()]
 
 def bet_exists(agent_name, match_id):
-    with get_db() as conn:
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT 1 FROM bets
-            WHERE agent_name = %s AND match_id = %s
-        """, (agent_name, match_id))
-        return cursor.fetchone() is not None
+    return agent_name in get_agents_with_bet(match_id)
+
 
 def get_unresolved_bets():
     with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = _dict_cursor(conn)
         cursor.execute("""
             SELECT bets.*, matches.winner, matches.status,
                    matches.odds_home, matches.odds_draw, matches.odds_away
             FROM bets
             JOIN matches ON bets.match_id = matches.match_id
             WHERE bets.result IS NULL
-            AND bets.skipped = FALSE
-            AND matches.status = 'FINISHED'
+              AND bets.skipped = FALSE
+              AND matches.status = 'FINISHED'
+              AND matches.winner IS NOT NULL
         """)
         return [dict(row) for row in cursor.fetchall()]
 
-def resolve_bet(bet_id, result, profit_loss, agent_name):
+
+def resolve_bets(resolutions):
+    """resolutions: iterable of (result, profit_loss, bet_id)."""
+    resolutions = list(resolutions)
+    if not resolutions:
+        return
     with get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute("""
+        psycopg2.extras.execute_batch(cursor, """
             UPDATE bets
             SET result = %s, profit_loss = %s
-            WHERE bet_id = %s
-        """, (result, profit_loss, bet_id))
+            WHERE bet_id = %s AND result IS NULL
+        """, resolutions)
 
-def get_match_by_api_id(api_id):
-    with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("SELECT * FROM matches WHERE api_id = %s", (api_id,))
-        row = cursor.fetchone()
-        return dict(row) if row else None
 
-def get_agents():
-    with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("""
-            SELECT 
-                agents.name,
-                agents.description,
-                COUNT(bets.bet_id) FILTER (WHERE bets.skipped = FALSE AND bets.result IS NOT NULL) as total_bets,
-                COUNT(bets.bet_id) FILTER (WHERE bets.result = 'WIN') as wins,
-                COUNT(bets.bet_id) FILTER (WHERE bets.result = 'LOSS') as losses,
-                COALESCE(SUM(bets.profit_loss) FILTER (WHERE bets.profit_loss IS NOT NULL), 0) as balance,
-                ROUND((COUNT(bets.bet_id) FILTER (WHERE bets.result = 'WIN')::float / 
-                    NULLIF(COUNT(bets.bet_id) FILTER (WHERE bets.result IS NOT NULL AND bets.skipped = FALSE), 0) * 100)::numeric, 1) as win_rate
-            FROM agents
-            LEFT JOIN bets ON bets.agent_name = agents.name
-            GROUP BY agents.name, agents.description
-            ORDER BY balance DESC
-        """)
-        
-        agents_data = cursor.fetchall()
-        
-        # Pobierz wszystkie bety potrzebne do streaka w jednym zapytaniu
-        cursor.execute("""
-            SELECT agent_name, result
-            FROM bets
-            WHERE result IS NOT NULL AND skipped = FALSE
-            ORDER BY agent_name, created_at ASC
-        """)
-        
-        all_bets = cursor.fetchall()
-        
-        # Grupuj bety per agent i licz streak w Pythonie
-        from collections import defaultdict
-        bets_by_agent = defaultdict(list)
-        for bet in all_bets:
-            bets_by_agent[bet['agent_name']].append(bet['result'])
-        
-        def calc_streak(results):
-            best = current = 0
-            for r in results:
-                if r == 'WIN':
-                    current += 1
-                    best = max(best, current)
-                else:
-                    current = 0
-            return best
-        
-        result = []
-        for row in agents_data:
-            r = dict(row)
-            r['win_rate'] = float(r['win_rate']) if r['win_rate'] else 0.0
-            r['best_streak'] = calc_streak(bets_by_agent[r['name']])
-            result.append(r)
-        
-        return result
+def resolve_bet(bet_id, result, profit_loss):
+    resolve_bets([(result, profit_loss, bet_id)])
 
-def get_agent_best_streak(agent_name):
-    with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("""
-            SELECT result FROM bets
-            WHERE agent_name = %s
-            AND result IS NOT NULL
-            AND skipped = FALSE
-            ORDER BY created_at ASC
-        """, (agent_name,))
-        
-        bets = cursor.fetchall()
-        best_streak = 0
-        current_streak = 0
-        
-        for bet in bets:
-            if bet['result'] == 'WIN':
-                current_streak += 1
-                best_streak = max(best_streak, current_streak)
-            else:
-                current_streak = 0
-        
-        return best_streak
 
 def get_bets_for_match(match_id):
     with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = _dict_cursor(conn)
         cursor.execute("""
-            SELECT * FROM bets WHERE match_id = %s AND skipped = FALSE
+            SELECT * FROM bets
+            WHERE match_id = %s AND skipped = FALSE
+            ORDER BY agent_name
         """, (match_id,))
         return [dict(row) for row in cursor.fetchall()]
 
-def get_match_by_id(match_id):
-    with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("SELECT * FROM matches WHERE match_id = %s", (match_id,))
-        row = cursor.fetchone()
-        return dict(row) if row else None
-
-def get_team_home_matches(team_name, limit=5):
-    with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("""
-            SELECT home_team, away_team, score, winner, utc_date
-            FROM matches
-            WHERE home_team = %s
-            AND status = 'FINISHED'
-            ORDER BY utc_date DESC
-            LIMIT %s
-        """, (team_name, limit))
-        return [dict(row) for row in cursor.fetchall()]
-
-def get_team_away_matches(team_name, limit=5):
-    with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("""
-            SELECT home_team, away_team, score, winner, utc_date
-            FROM matches
-            WHERE away_team = %s
-            AND status = 'FINISHED'
-            ORDER BY utc_date DESC
-            LIMIT %s
-        """, (team_name, limit))
-        return [dict(row) for row in cursor.fetchall()]
 
 def get_agent_bets(agent_name):
     with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = _dict_cursor(conn)
         cursor.execute("""
-            SELECT bets.*, matches.home_team, matches.away_team, 
+            SELECT bets.*, matches.home_team, matches.away_team,
                    matches.utc_date, matches.league, matches.score,
                    matches.winner, matches.status,
                    matches.odds_home, matches.odds_draw, matches.odds_away
@@ -300,59 +334,75 @@ def get_agent_bets(agent_name):
             ORDER BY matches.utc_date DESC
         """, (agent_name,))
         return [dict(row) for row in cursor.fetchall()]
-    
-def get_team_stats(team_name):
+
+
+# ---------------------------------------------------------------- stats
+
+def _best_streak(results):
+    best = current = 0
+    for r in results:
+        if r == "WIN":
+            current += 1
+            best = max(best, current)
+        else:
+            current = 0
+    return best
+
+
+def get_agents():
     with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = _dict_cursor(conn)
         cursor.execute("""
-            SELECT home_team, away_team, score
-            FROM matches
-            WHERE (home_team = %s OR away_team = %s)
-            AND status = 'FINISHED'
-            AND score IS NOT NULL
-        """, (team_name, team_name))
-        
-        matches = cursor.fetchall()
-        
-        if not matches:
-            return None
-        
-        goals_scored = []
-        goals_conceded = []
-        
-        for match in matches:
-            try:
-                home_goals, away_goals = map(int, match['score'].split(':'))
-                if match['home_team'] == team_name:
-                    goals_scored.append(home_goals)
-                    goals_conceded.append(away_goals)
-                else:
-                    goals_scored.append(away_goals)
-                    goals_conceded.append(home_goals)
-            except:
-                continue
-        
-        if not goals_scored:
-            return None
-        
-        return {
-            "avg_scored": round(sum(goals_scored) / len(goals_scored), 2),
-            "avg_conceded": round(sum(goals_conceded) / len(goals_conceded), 2),
-            "matches_analyzed": len(goals_scored)
-        }
+            SELECT
+                agents.name,
+                agents.description,
+                COUNT(bets.bet_id) FILTER (WHERE bets.skipped = FALSE AND bets.result IS NOT NULL) AS total_bets,
+                COUNT(bets.bet_id) FILTER (WHERE bets.result = 'WIN')  AS wins,
+                COUNT(bets.bet_id) FILTER (WHERE bets.result = 'LOSS') AS losses,
+                COALESCE(SUM(bets.profit_loss), 0) AS balance
+            FROM agents
+            LEFT JOIN bets ON bets.agent_name = agents.name
+            GROUP BY agents.name, agents.description
+            ORDER BY balance DESC
+        """)
+        agents_data = cursor.fetchall()
+
+        # Streaks follow the order in which matches were played, not when bets were stored.
+        cursor.execute("""
+            SELECT bets.agent_name, bets.result
+            FROM bets
+            JOIN matches ON bets.match_id = matches.match_id
+            WHERE bets.result IS NOT NULL AND bets.skipped = FALSE
+            ORDER BY bets.agent_name, matches.utc_date ASC, bets.bet_id ASC
+        """)
+        results_by_agent = defaultdict(list)
+        for bet in cursor.fetchall():
+            results_by_agent[bet["agent_name"]].append(bet["result"])
+
+    agents = []
+    for row in agents_data:
+        agent = dict(row)
+        agent["balance"] = float(agent["balance"] or 0)
+        settled = agent["total_bets"]
+        agent["win_rate"] = round(agent["wins"] / settled * 100, 1) if settled else 0.0
+        agent["best_streak"] = _best_streak(results_by_agent[agent["name"]])
+        agents.append(agent)
+    return agents
+
 
 def get_stats():
     with get_db() as conn:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = _dict_cursor(conn)
         cursor.execute("""
-            SELECT 
-                COUNT(*) FILTER (WHERE skipped = FALSE) as total_bets,
-                COUNT(*) FILTER (WHERE result = 'WIN') as total_wins,
-                COUNT(*) FILTER (WHERE result = 'LOSS') as total_losses,
-                COUNT(DISTINCT match_id) as total_matches
+            SELECT
+                COUNT(*) FILTER (WHERE skipped = FALSE) AS total_bets,
+                COUNT(*) FILTER (WHERE result = 'WIN')  AS total_wins,
+                COUNT(*) FILTER (WHERE result = 'LOSS') AS total_losses,
+                COUNT(DISTINCT match_id) AS total_matches
             FROM bets
         """)
         return dict(cursor.fetchone())
+
 
 if __name__ == "__main__":
     from ai_agents import AGENTS

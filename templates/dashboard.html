@@ -11,7 +11,7 @@
 
 <div class="agents-grid">
   {% for agent in agents %}
-  <a href="/agent/{{ agent.name }}" class="agent-card">
+  <a href="{{ url_for('agent_detail', agent_name=agent.name) }}" class="agent-card">
     <div class="agent-card-header">
       <span class="agent-card-rank"># {{ loop.index }}</span>
       <span class="streak-badge">{{ agent.best_streak }}x streak</span>

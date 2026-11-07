@@ -1,192 +1,143 @@
-from flask import Flask, render_template
+import os
+from urllib.parse import quote
+from xml.sax.saxutils import escape
+
+from flask import Flask, Response, abort, render_template
 from flask_caching import Cache
-from database import get_upcoming_matches, get_finished_matches, get_agents, get_bets_for_match, get_match_by_id, get_agent_bets, get_stats
 
-from database import init_db, init_agents
-from ai_agents import AGENTS
-
-import threading
-from scheduler import update_matches
-
-from config import LEAGUES
+from ai_agents import AGENT_NAMES, AGENTS
+from config import DISABLE_SCHEDULER, LEAGUES, SITE_URL
+from database import (
+    get_agent_bets,
+    get_agents,
+    get_bets_for_match,
+    get_finished_matches,
+    get_match_by_id,
+    get_stats,
+    get_upcoming_matches,
+    init_agents,
+    init_db,
+)
 
 app = Flask(__name__)
+cache = Cache(app, config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 300})
 
-cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT': 300})
+try:
+    init_db()
+    init_agents(AGENTS)
+except Exception as e:  # don't crash the whole site if the DB is briefly unavailable at boot
+    print(f"Database init failed: {e}")
 
-init_db()
-init_agents(AGENTS)
+if not DISABLE_SCHEDULER:
+    from scheduler import start_scheduler
+    start_scheduler()
 
-def run_scheduler():
-    try:
-        update_matches()
-    except Exception as e:
-        print(f"Scheduler error: {e}")
-    
-    from apscheduler.schedulers.background import BackgroundScheduler
-    from time import sleep
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(update_matches, "interval", hours=1)
-    scheduler.start()
-    
-    try:
-        while True:
-            sleep(60)
-    except Exception as e:
-        print(f"Scheduler stopped: {e}")
 
-thread = threading.Thread(target=run_scheduler, daemon=True)
-thread.start()
+@app.context_processor
+def inject_globals():
+    return {"site_url": SITE_URL}
 
-@app.route('/')
+
+@app.route("/")
+@cache.cached(timeout=300)
 def index():
-    stats = get_stats()
-    return render_template('index.html', active_page='home', stats=stats)
+    return render_template("index.html", active_page="home", stats=get_stats(),
+                           agent_count=len(AGENTS), league_count=len(LEAGUES))
 
-@app.route('/upcoming')
+
+@app.route("/upcoming")
 @cache.cached(timeout=300)
 def upcoming_matches():
-    matches = get_upcoming_matches()
-    return render_template("upcoming.html", matches=matches, leagues=LEAGUES, active_page='upcoming')
+    return render_template("upcoming.html", matches=get_upcoming_matches(), leagues=LEAGUES, active_page="upcoming")
 
-@app.route('/finished')
+
+@app.route("/finished")
 @cache.cached(timeout=300)
 def finished_matches():
-    matches = get_finished_matches()
-    return render_template("finished.html", matches=matches, leagues=LEAGUES, active_page='finished')
+    return render_template("finished.html", matches=get_finished_matches(), leagues=LEAGUES, active_page="finished")
 
-@app.route('/dashboard')
+
+@app.route("/dashboard")
 @cache.cached(timeout=300)
 def dashboard():
-    agents = get_agents()
-    return render_template('dashboard.html', agents=agents, active_page='dashboard')
+    return render_template("dashboard.html", agents=get_agents(), active_page="dashboard")
 
-@app.route('/faq')
+
+@app.route("/faq")
 def faq():
-    return render_template('faq.html', active_page='faq')
+    return render_template("faq.html", active_page="faq")
 
-@app.route('/agent/<agent_name>')
-@cache.cached(timeout=300, key_prefix='agent_%s')
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html", active_page="privacy")
+
+
+@app.route("/agent/<agent_name>")
+@cache.cached(timeout=300)
 def agent_detail(agent_name):
-    bets = get_agent_bets(agent_name)
-    return render_template('agent.html', agent_name=agent_name, bets=bets)
+    if agent_name not in AGENT_NAMES:
+        abort(404)
+    return render_template("agent.html", agent_name=agent_name, bets=get_agent_bets(agent_name),
+                           active_page="dashboard")
 
-@app.route('/match/<int:match_id>')
-@cache.cached(timeout=300, key_prefix='match_%s')
+
+@app.route("/match/<int:match_id>")
+@cache.cached(timeout=300)
 def match_detail(match_id):
     match = get_match_by_id(match_id)
-    bets = get_bets_for_match(match_id)
-    return render_template('match.html', match=match, bets=bets)
+    if match is None:
+        abort(404)
+    return render_template("match.html", match=match, bets=get_bets_for_match(match_id))
 
-@app.route('/privacy')
-def privacy():
-    return render_template('privacy.html', active_page='privacy')
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html'), 404
+    return render_template("404.html"), 404
+
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    return render_template('500.html'), 500
+    return render_template("500.html"), 500
 
-from flask import Response
 
-@app.route('/sitemap.xml')
+SITEMAP_PAGES = [
+    ("/", "daily", "1.0"),
+    ("/upcoming", "hourly", "0.9"),
+    ("/finished", "hourly", "0.9"),
+    ("/dashboard", "hourly", "0.8"),
+    ("/faq", "monthly", "0.5"),
+    ("/privacy", "monthly", "0.3"),
+]
+
+
+@app.route("/sitemap.xml")
+@cache.cached(timeout=3600)
 def sitemap():
-    xml = '''<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url>
-        <loc>https://gameprophet.lol/</loc>
-        <changefreq>daily</changefreq>
-        <priority>1.0</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/upcoming</loc>
-        <changefreq>hourly</changefreq>
-        <priority>0.9</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/finished</loc>
-        <changefreq>hourly</changefreq>
-        <priority>0.9</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/dashboard</loc>
-        <changefreq>hourly</changefreq>
-        <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/faq</loc>
-        <changefreq>monthly</changefreq>
-        <priority>0.5</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/privacy</loc>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/agent/The%20Conservative</loc>
-        <changefreq>daily</changefreq>
-        <priority>0.6</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/agent/The%20Aggressive</loc>
-        <changefreq>daily</changefreq>
-        <priority>0.6</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/agent/The%20Analyst</loc>
-        <changefreq>daily</changefreq>
-        <priority>0.6</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/agent/The%20Lucky%20One</loc>
-        <changefreq>daily</changefreq>
-        <priority>0.6</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/agent/The%20Follower</loc>
-        <changefreq>daily</changefreq>
-        <priority>0.6</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/agent/The%20Quant</loc>
-        <changefreq>daily</changefreq>
-        <priority>0.6</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/agent/The%20Momentum%20Trader</loc>
-        <changefreq>daily</changefreq>
-        <priority>0.6</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/agent/The%20Draw%20Specialist</loc>
-        <changefreq>daily</changefreq>
-        <priority>0.6</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/agent/The%20Home%20Fortress</loc>
-        <changefreq>daily</changefreq>
-        <priority>0.6</priority>
-    </url>
-    <url>
-        <loc>https://gameprophet.lol/agent/The%20Contrarian</loc>
-        <changefreq>daily</changefreq>
-        <priority>0.6</priority>
-    </url>
-</urlset>'''
-    return Response(xml, mimetype='application/xml')
+    entries = list(SITEMAP_PAGES)
+    entries += [(f"/agent/{quote(name)}", "daily", "0.6") for name in AGENT_NAMES]
+    try:
+        entries += [(f"/match/{m['match_id']}", "daily", "0.5") for m in get_upcoming_matches()]
+        entries += [(f"/match/{m['match_id']}", "weekly", "0.4") for m in get_finished_matches()]
+    except Exception as e:
+        print(f"Sitemap: could not load matches: {e}")
 
-@app.route('/robots.txt')
+    urls = "\n".join(
+        f"  <url>\n    <loc>{escape(SITE_URL + path)}</loc>\n"
+        f"    <changefreq>{freq}</changefreq>\n    <priority>{priority}</priority>\n  </url>"
+        for path, freq, priority in entries
+    )
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+           f"{urls}\n</urlset>")
+    return Response(xml, mimetype="application/xml")
+
+
+@app.route("/robots.txt")
 def robots():
-    txt = '''User-agent: *
-Allow: /
-Sitemap: https://gameprophet.lol/sitemap.xml'''
-    return Response(txt, mimetype='text/plain')
+    txt = f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n"
+    return Response(txt, mimetype="text/plain")
 
-import os
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
