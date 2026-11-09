@@ -1,100 +1,147 @@
 # GameProphet
 
-GameProphet is a football match prediction simulation. Ten AI agents compete to predict match outcomes across top European football leagues. The application automatically fetches match data, places bets through AI agents, and tracks their performance over time.
+Ten AI agents, each with its own betting strategy, try to predict football matches in four European leagues. Every hour GameProphet fetches fixtures and results, gets real bookmaker odds, asks each agent for a pick and a stake, and settles the bets once a match ends. A leaderboard tracks which strategy actually makes money.
 
-## Requirements
+Leagues: Premier League, Bundesliga, Serie A, La Liga.
+
+> GameProphet is a simulation for entertainment and learning only. No real money is involved, and nothing here is betting or financial advice.
+
+## How it works
+
+1. **Fixtures and results.** Every hour the scheduler downloads matches from the last 40 days and the next 7 days from [football-data.org](https://www.football-data.org/).
+2. **Odds.** Once a day it gets average h2h odds from [The Odds API](https://the-odds-api.com/) for matches in the next 3 days.
+3. **Predictions.** For every upcoming match that has odds, each agent receives the odds, the league standings, goal averages and recent home/away form. It answers with `HOME`, `DRAW` or `AWAY` and a stake (0% means "skip").
+4. **Settlement.** Each agent has a fixed budget of **$1,000 per match**. When a match finishes, bets are settled using the stored odds, and the dashboard shows each agent's cumulative profit/loss, win rate and best streak.
+
+Predictions come from an LLM: [Groq](https://groq.com/) (`llama-3.3-70b-versatile`, free API key) or a local [Ollama](https://ollama.com/) model (`llama3.2`, no key needed).
+
+## The agents
+
+| Agent | Strategy |
+|---|---|
+| The Conservative | Bets only on clear favorites (odds below 1.7) |
+| The Aggressive | High risk, high reward, never skips |
+| The Analyst | Weighs standings, form, odds and goals together |
+| The Lucky One | Pure instinct, with absurd reasoning |
+| The Follower | Always backs the team higher in the table |
+| The Quant | Looks for value bets where the odds look too high |
+| The Momentum Trader | Only backs teams on a winning streak |
+| The Draw Specialist | Hunts for evenly matched games |
+| The Home Fortress | Only backs home teams with strong home form |
+| The Contrarian | Always bets against the bookmakers' favorite |
+
+The agent prompts are in [`ai_agents.py`](ai_agents.py). Add or edit an entry in `AGENTS` to create your own strategy.
+
+## Running locally
+
+### Requirements
 
 - Python 3.10+
-- PostgreSQL database (Supabase recommended)
-- Groq API key (free plan) — for cloud deployment
-- OR Ollama with llama3.2 — for local usage
-- football-data.org API key (free plan)
-- the-odds-api.com API key (free plan) — for bookmaker odds
+- PostgreSQL: the included `docker-compose.yml` is the easiest way to get it, but any PostgreSQL works (local install, Supabase, Neon…)
+- Free API keys:
+  - [football-data.org](https://www.football-data.org/client/register): matches and standings
+  - [The Odds API](https://the-odds-api.com/): bookmaker odds (without it agents have nothing to bet on)
+  - [Groq](https://console.groq.com/keys): AI predictions. Not needed if you use Ollama.
 
-## AI Provider
+### Setup
 
-GameProphet supports two AI providers:
+```bash
+git clone https://github.com/4Opm/GameProphet.git
+cd GameProphet
 
-- Ollama (local) — requires Ollama installed with llama3.2 model pulled. No API key needed. Set AI_PROVIDER=ollama in .env.
-- Groq (cloud) — requires a free Groq API key from groq.com. Set AI_PROVIDER=groq in .env (default). Recommended for deployment.
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# macOS / Linux:
+source .venv/bin/activate
 
-## Installation
+pip install -r requirements.txt
+```
 
-1. Clone the repository and navigate to the project folder.
+Start a local database (or skip this and point `DATABASE_URL` at your own PostgreSQL):
 
-2. Create and activate a virtual environment:
+```bash
+docker compose up -d
+```
 
-        python -m venv venv
-        venv\Scripts\activate
+Create your config file and fill in the API keys:
 
-3. Install dependencies:
+```bash
+cp .env.example .env    # Windows cmd: copy .env.example .env
+```
 
-        pip install -r requirements.txt
+Run the app:
 
-4. Pull the Ollama model:
+```bash
+python app.py
+```
 
-        ollama pull llama3.2
+Open http://localhost:5000. The tables are created automatically on first start. The first data update starts right away in the background and then repeats every hour. Fetching takes about half a minute, and the agents' predictions take longer, since every agent is asked about every match that has odds. Missing keys are reported in the console at startup.
 
-5. Set up a PostgreSQL database (e.g. on Supabase) and copy the connection string.
+### Using Ollama instead of Groq
 
-6. Create a .env file in the root folder:
+```bash
+ollama pull llama3.2
+```
 
-        API_KEY=your_football_data_api_key
-        GROQ_API_KEY=your_groq_api_key
-        AI_PROVIDER=groq
-        DATABASE_URL=your_postgresql_connection_string
-        ODDS_API_KEY=your_the_odds_api_key
+Then set `AI_PROVIDER=ollama` in `.env`. `GROQ_API_KEY` can stay empty.
 
-    Optional: DISABLE_SCHEDULER=1 runs only the website, without fetching data or placing bets.
+### Configuration
 
-7. Run the application:
+All settings live in `.env` (see [`.env.example`](.env.example)):
 
-        python app.py
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | yes | PostgreSQL connection string |
+| `API_KEY` | yes | football-data.org API key |
+| `ODDS_API_KEY` | yes | The Odds API key |
+| `AI_PROVIDER` | no | `groq` (default) or `ollama` |
+| `GROQ_API_KEY` | with Groq | Groq API key |
+| `SITE_URL` | no | Public URL used in sitemap/meta tags (default `http://localhost:5000`) |
+| `GA_MEASUREMENT_ID` | no | Google Analytics 4 ID; tracking is off when empty |
+| `DISABLE_SCHEDULER` | no | `1` runs only the website, without fetching data or placing bets |
+| `PORT` | no | Port for `python app.py` (default `5000`) |
 
-The scheduler will start automatically in the background.
+Leagues, the per-match budget and model names are set in [`config.py`](config.py).
 
-8. Open your browser and go to http://localhost:5000
+### Useful commands
 
-## Project Structure
+```bash
+python database.py    # create tables and agents without starting the site
+python scheduler.py   # run only the background worker (no website)
+python test.py        # ask one agent about the next match, without saving a bet
+```
 
-- app.py — Flask backend and routes
-- scheduler.py — Automatic match fetching and bet settlement
-- fetcher.py — football-data.org API integration (matches, standings)
-- odds_fetcher.py — the-odds-api.com integration (bookmaker odds)
-- ai_agents.py — AI agent definitions, Groq/Ollama integration, bet settlement
-- database.py — PostgreSQL schema and queries
-- config.py — Configuration and settings
-- templates/ — Jinja2 HTML templates
-- static/css/style.css — Stylesheet
+## Deployment
 
-## Leagues
+The `Procfile` runs the app with gunicorn:
 
-- Premier League
-- Bundesliga
-- Serie A
-- La Liga
+```
+web: gunicorn app:app --timeout 120 --workers 1
+```
 
-## AI Agents
+Keep `--workers 1`, because the scheduler runs inside the web process and more workers would each run it, which doubles API calls and LLM requests. Set the same environment variables as in `.env` on your hosting platform (Railway, Render, Heroku, …), plus `SITE_URL` with your real domain.
 
-- The Conservative — bets only on clear favorites.
-- The Aggressive — high risk, high reward, never skips.
-- The Analyst — weighs standings, form, odds and goals.
-- The Lucky One — pure instinct, absurd reasoning.
-- The Follower — backs the team higher in the table.
-- The Quant — looks for value where odds look too high.
-- The Momentum Trader — only backs teams on a winning streak.
-- The Draw Specialist — hunts for likely draws.
-- The Home Fortress — only backs home teams with strong home form.
-- The Contrarian — always bets against the bookmakers' favorite.
+## Project structure
 
-## How It Works
+```
+app.py            Flask routes, sitemap, robots.txt
+scheduler.py      Hourly job: fetch matches -> settle bets -> update odds -> place bets
+fetcher.py        football-data.org client (matches, cached standings)
+odds_fetcher.py   The Odds API client + fuzzy team-name matching
+ai_agents.py      Agent definitions, LLM calls, response parsing, bet settlement
+database.py       PostgreSQL schema and queries
+config.py         Settings loaded from .env
+templates/        Jinja2 templates
+static/           CSS, JavaScript, images
+```
 
-1. Every hour the scheduler fetches matches (last 40 days and next 7 days) from football-data.org.
-2. Once a day it fetches average bookmaker odds for matches in the next 3 days from the-odds-api.com.
-3. For every upcoming match with odds, each agent gets the odds, league standings, goal averages and recent home/away form, and answers with a pick and a stake (Groq, llama-3.3-70b-versatile).
-4. Each agent has a fixed budget of $1,000 per match. The dashboard tracks cumulative profit and loss starting from $0.
-5. When a match finishes, bets are settled automatically using the stored odds.
+## Data sources and limits
 
-## Disclaimer
+- football-data.org's free plan allows 10 requests per minute. The scheduler waits 6 seconds between leagues and caches standings for an hour.
+- The Odds API's free plan has a monthly request quota. Odds are fetched once per day (4 requests).
+- Team names differ between the two APIs, so they are matched with fuzzy string matching (`thefuzz`).
 
-GameProphet is a simulation for entertainment purposes only. This is not financial or investment advice. All predictions are made by AI agents and should not be used as a basis for real betting decisions.
+## License
+
+[MIT](LICENSE)
