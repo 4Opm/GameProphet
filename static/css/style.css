@@ -101,18 +101,6 @@ nav {
   border-color: rgba(59,158,255,.2);
 }
 
-.nav-coffee {
-  font-size: .78rem;
-  font-weight: 600;
-  background: #FFDD00;
-  color: #000 !important;
-  padding: 5px 12px;
-  border-radius: 6px;
-  text-decoration: none !important;
-  transition: opacity .15s;
-  white-space: nowrap;
-}
-.nav-coffee:hover { opacity: .85; }
 
 /* ── FOOTER ── */
 footer {
@@ -1062,10 +1050,6 @@ a:visited { color: var(--accent); }
   .nav-right {
     gap: 2px;
     flex-wrap: wrap;
-  }
-
-  .nav-coffee {
-    display: none;
   }
 
   .nav-link {
