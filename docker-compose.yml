@@ -1,0 +1,22 @@
+# Local PostgreSQL for development: `docker compose up -d`
+# Connection string: postgresql://gameprophet:gameprophet@localhost:5432/gameprophet
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gameprophet
+      POSTGRES_PASSWORD: gameprophet
+      POSTGRES_DB: gameprophet
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gameprophet -d gameprophet"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

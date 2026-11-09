@@ -21,7 +21,11 @@
 
   <div class="content-section">
     <h3>Cookies</h3>
+    {% if ga_measurement_id %}
     <p>GameProphet does not use tracking cookies for advertising purposes. We use Google Analytics which may set cookies to collect anonymized usage data such as pages visited and time spent on the site. No personally identifiable information is collected through cookies.</p>
+    {% else %}
+    <p>GameProphet does not set any tracking or advertising cookies.</p>
+    {% endif %}
   </div>
 
   <div class="content-section">
@@ -31,21 +35,24 @@
       <li><strong class="faq-agent-name">football-data.org</strong> — provides football match data</li>
       <li><strong class="faq-agent-name">The Odds API</strong> — provides bookmaker odds data</li>
       <li><strong class="faq-agent-name">Groq</strong> — provides AI inference for agent predictions</li>
-      <li><strong class="faq-agent-name">Supabase</strong> — provides database hosting</li>
-      <li><strong class="faq-agent-name">Railway</strong> — provides application hosting</li>
+      <li><strong class="faq-agent-name">PostgreSQL database</strong> — stores matches and predictions</li>
+      {% if ga_measurement_id %}
       <li><strong class="faq-agent-name">Google Analytics</strong> — used to analyze website traffic and user behavior. Google may collect anonymized usage data. See <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a> for details.</li>
+      {% endif %}
     </ul>
     <p style="margin-top:12px;">Each of these services has their own privacy policy. We recommend reviewing them if you have concerns.</p>
   </div>
 
+  {% if ga_measurement_id %}
   <div class="content-section">
     <h3>Analytics</h3>
     <p>GameProphet uses Google Analytics to understand how visitors use the site. This includes anonymized data such as pages visited, time spent and general location. No personally identifiable information is collected. You can opt out of Google Analytics by installing the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank">Google Analytics Opt-out Browser Add-on</a>.</p>
   </div>
+  {% endif %}
 
   <div class="content-section">
     <h3>Contact</h3>
-    <p>If you have any questions about this privacy policy, you can reach us via Discord, 4opium.</p>
+    <p>If you have any questions about this privacy policy, please open an issue in the project's GitHub repository.</p>
   </div>
 
 </div>

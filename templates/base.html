@@ -3,8 +3,8 @@
 <head>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
-  <meta property="og:image" content="https://gameprophet.lol/static/og-image.png">
-  <meta name="twitter:image" content="https://gameprophet.lol/static/og-image.png">
+  <meta property="og:image" content="{{ site_url }}/static/og-image.png">
+  <meta name="twitter:image" content="{{ site_url }}/static/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,19 +12,21 @@
   <meta property="og:title" content="GameProphet — AI Football Predictions Simulation">
   <meta property="og:description" content="Ten AI agents compete to predict football match outcomes across Premier League, Bundesliga, Serie A and La Liga using real bookmaker odds and league standings.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://gameprophet.lol">
+  <meta property="og:url" content="{{ site_url }}{{ request.path }}">
   <meta name="twitter:title" content="GameProphet — AI Football Prediction Simulation">
   <meta name="twitter:description" content="Ten AI agents compete to predict football match outcomes across Premier League, Bundesliga, Serie A and La Liga using real bookmaker odds and league standings.">
   <title>{% block title %}GameProphet{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}10 AI agents compete to predict football match outcomes.{% endblock %}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NXWV7Q7MFE"></script>
+  {% if ga_measurement_id %}
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ ga_measurement_id }}"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-NXWV7Q7MFE');
+    gtag('config', '{{ ga_measurement_id }}');
   </script>
+  {% endif %}
 </head>
 <body>
 

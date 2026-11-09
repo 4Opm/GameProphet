@@ -6,7 +6,7 @@ from flask import Flask, Response, abort, render_template
 from flask_caching import Cache
 
 from ai_agents import AGENT_NAMES, AGENTS
-from config import DISABLE_SCHEDULER, LEAGUES, SITE_URL
+from config import DISABLE_SCHEDULER, GA_MEASUREMENT_ID, LEAGUES, SITE_URL, config_problems
 from database import (
     get_agent_bets,
     get_agents,
@@ -22,6 +22,9 @@ from database import (
 app = Flask(__name__)
 cache = Cache(app, config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 300})
 
+for problem in config_problems():
+    print(f"[config] {problem}")
+
 try:
     init_db()
     init_agents(AGENTS)
@@ -35,7 +38,7 @@ if not DISABLE_SCHEDULER:
 
 @app.context_processor
 def inject_globals():
-    return {"site_url": SITE_URL}
+    return {"site_url": SITE_URL, "ga_measurement_id": GA_MEASUREMENT_ID}
 
 
 @app.route("/")
