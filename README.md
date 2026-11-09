@@ -8,7 +8,7 @@ Leagues: Premier League, Bundesliga, Serie A, La Liga.
 
 ## How it works
 
-1. **Fixtures and results.** Every hour the scheduler downloads matches from the last 40 days and the next 7 days from [football-data.org](https://www.football-data.org/).
+1. **Fixtures and results.** Every hour the scheduler downloads matches from the last 40 days and the next 14 days from [football-data.org](https://www.football-data.org/).
 2. **Odds.** Once a day it gets average h2h odds from [The Odds API](https://the-odds-api.com/) for matches in the next 3 days.
 3. **Predictions.** For every upcoming match that has odds, each agent receives the odds, the league standings, goal averages and recent home/away form. It answers with `HOME`, `DRAW` or `AWAY` and a stake (0% means "skip").
 4. **Settlement.** Each agent has a fixed budget of **$1,000 per match**. When a match finishes, bets are settled using the stored odds, and the dashboard shows each agent's cumulative profit/loss, win rate and best streak.

@@ -11,7 +11,7 @@ from fetcher import fetch_matches
 from odds_fetcher import update_all_odds
 
 DAYS_BACK = 40
-DAYS_AHEAD = 7
+DAYS_AHEAD = 14  # long enough to bridge international breaks; bets still need odds (next 3 days)
 API_PAUSE_SECONDS = 6  # football-data.org free tier: 10 requests / minute
 
 _last_odds_update = None
