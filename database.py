@@ -81,6 +81,12 @@ def init_db():
                 created_at TEXT DEFAULT (now()::text)
             )
         """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS app_state (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+        """)
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_matches_home ON matches(home_team)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_matches_away ON matches(away_team)")
@@ -96,6 +102,26 @@ def init_agents(agents):
                 VALUES (%s, %s)
                 ON CONFLICT (name) DO UPDATE SET description = EXCLUDED.description
             """, (agent["name"], agent["description"]))
+
+
+# ---------------------------------------------------------------- app state
+
+def get_state(key):
+    """Small persistent key/value store (survives restarts and one-off cron runs)."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT value FROM app_state WHERE key = %s", (key,))
+        row = cursor.fetchone()
+        return row[0] if row else None
+
+
+def set_state(key, value):
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO app_state (key, value) VALUES (%s, %s)
+            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+        """, (key, value))
 
 
 # ---------------------------------------------------------------- matches
