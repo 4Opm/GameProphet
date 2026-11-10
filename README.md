@@ -107,26 +107,61 @@ Leagues, the per-match budget and model names are set in [`config.py`](config.py
 ### Useful commands
 
 ```bash
-python database.py    # create tables and agents without starting the site
-python scheduler.py   # run only the background worker (no website)
-python test.py        # ask one agent about the next match, without saving a bet
+python database.py           # create tables and agents without starting the site
+python scheduler.py          # run only the background worker (no website)
+python scheduler.py --once   # run a single update and exit
+python test.py               # ask one agent about the next match, without saving a bet
 ```
 
-## Deployment
+## Deployment (free)
 
-The `Procfile` runs the app with gunicorn:
+The live site at [gameprophet.lol](https://gameprophet.lol) runs on free plans only. The website and the hourly update run separately, because free web hosts go to sleep when nobody visits:
+
+| Part | Service | Notes |
+|---|---|---|
+| Website | [Render](https://render.com) free web service | Sleeps after 15 min without traffic; the first visit after that takes up to a minute |
+| Database | [Neon](https://neon.com) free Postgres | Scales to zero when idle, never expires |
+| Hourly update | GitHub Actions ([`update.yml`](.github/workflows/update.yml)) | Runs `python scheduler.py --once` every hour |
+
+### 1. Database (Neon)
+
+Create a project on Neon, open **Connect**, tick **Show password** and copy the connection string. That string is your `DATABASE_URL`. Tables are created automatically on the first run.
+
+### 2. Hourly update (GitHub Actions)
+
+In the repository go to **Settings → Secrets and variables → Actions** and add these secrets:
+
+`DATABASE_URL`, `API_KEY`, `ODDS_API_KEY`, `GROQ_API_KEY`
+
+Then open the **Actions** tab, choose **Update matches** and click **Run workflow** to test it. After that it runs every hour on its own.
+
+> GitHub turns off scheduled workflows in public repositories after 60 days without any activity in the repo. If updates stop, open the Actions tab and enable the workflow again.
+
+### 3. Website (Render)
+
+1. On Render choose **New → Blueprint** and select this repository. [`render.yaml`](render.yaml) sets up a free web service with the scheduler turned off.
+2. When asked, paste `DATABASE_URL` (and optionally `GA_MEASUREMENT_ID`).
+3. Under **Settings → Custom Domains** add your domain and create the DNS records Render shows you at your domain registrar. HTTPS is set up automatically.
+
+If you fork the project, change `SITE_URL` in `render.yaml` to your own domain, and change the repository name in the `if:` line of `update.yml`.
+
+### Other hosts
+
+Any host that can run Python works. On an always-on server you can skip GitHub Actions and let the app run the scheduler itself (leave `DISABLE_SCHEDULER` unset). The `Procfile` does exactly that:
 
 ```
 web: gunicorn app:app --timeout 120 --workers 1
 ```
 
-Keep `--workers 1`, because the scheduler runs inside the web process and more workers would each run it, which doubles API calls and LLM requests. Set the same environment variables as in `.env` on your hosting platform (Railway, Render, Heroku, …), plus `SITE_URL` with your real domain.
+Keep `--workers 1` in that setup: each worker would start its own scheduler, which doubles API calls and LLM requests.
 
 ## Project structure
 
 ```
 app.py            Flask routes, sitemap, robots.txt
 scheduler.py      Hourly job: fetch matches -> settle bets -> update odds -> place bets
+render.yaml       Render config for the website
+.github/workflows GitHub Actions hourly update
 fetcher.py        football-data.org client (matches, cached standings)
 odds_fetcher.py   The Odds API client + fuzzy team-name matching
 ai_agents.py      Agent definitions, LLM calls, response parsing, bet settlement
