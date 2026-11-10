@@ -1,0 +1,23 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# The website only. Hourly data updates run in GitHub Actions (.github/workflows/update.yml),
+# so the scheduler is disabled here and the free instance is allowed to sleep.
+services:
+  - type: web
+    name: gameprophet
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    healthCheckPath: /robots.txt
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DISABLE_SCHEDULER
+        value: "1"
+      - key: SITE_URL
+        value: https://gameprophet.lol
+      - key: DATABASE_URL
+        sync: false   # paste your Neon connection string in the Render dashboard
+      - key: GA_MEASUREMENT_ID
+        sync: false   # optional
