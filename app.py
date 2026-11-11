@@ -1,8 +1,9 @@
 import os
+import re
 from urllib.parse import quote
 from xml.sax.saxutils import escape
 
-from flask import Flask, Response, abort, render_template
+from flask import Flask, Response, abort, render_template, request
 from flask_caching import Cache
 
 from ai_agents import AGENT_NAMES, AGENTS
@@ -34,6 +35,33 @@ except Exception as e:  # don't crash the whole site if the DB is briefly unavai
 if not DISABLE_SCHEDULER:
     from scheduler import start_scheduler
     start_scheduler()
+
+
+# Paths that only vulnerability scanners ask for (/.env, /.git/config, /wp-login.php...).
+# They get a tiny plain 404 instead of the rendered error page.
+SCANNER_PATTERN = re.compile(r"(^|/)\.(env|git|svn|hg|aws|ssh|htaccess|htpasswd|DS_Store)|\.(php|asp|aspx|jsp|cgi|sql|bak)$|(^|/)(wp-|phpmyadmin)",
+                             re.IGNORECASE)
+
+
+@app.before_request
+def block_scanners():
+    if SCANNER_PATTERN.search(request.path):
+        return Response("Not Found", status=404, mimetype="text/plain")
+
+
+@app.after_request
+def security_headers(response):
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    if request.is_secure or request.headers.get("X-Forwarded-Proto") == "https":
+        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
+    return response
+
+
+@app.route("/healthz")
+def healthz():
+    return Response("ok", mimetype="text/plain")
 
 
 @app.context_processor
